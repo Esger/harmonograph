@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Your harmonogram</title>
+	<style>
+		body{
+			height:100%;
+			background-color:#404000;
+		}
+		img{
+			display:block;
+			position:relative;
+			margin:20px auto;
+		}
+		.addThis{
+			position:fixed; 
+			left:0; top:0;
+		}
+	</style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+</head>
+
+<body>
+	<img class="harmonogram" src="img/harmonogram.jpg" alt="mijn harmonogram" />
+	<div class="addThis">
+		<!-- AddThis Button BEGIN -->
+		<div class="addthis_toolbox addthis_default_style ">
+			<a class="addthis_counter addthis_pill_style"></a>
+		</div>
+		<script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4f3c4b976815089f"></script>
+		<!-- AddThis Button END -->
+	</div>
+	
+<script type="text/javascript" >
+$(function(){
+	$('.harmonogram').css('marginTop',($(document).innerHeight()-600)/2);
+});
+	
+</script>
+</body>
+</html>
