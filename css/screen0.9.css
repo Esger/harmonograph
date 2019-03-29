@@ -21,8 +21,8 @@ body {
     flex-direction: column;
     justify-content: stretch;
     position: relative;
-    height: 96vh;
-    width: 96vw;
+    height: 100vh;
+    width: 100vw;
     overflow: hidden;
 }
 
@@ -74,7 +74,8 @@ footer, header {
     position: absolute;
     display: flex;
     flex: 1 0 20vh;
-    width: 100%;
+    margin: 2em;
+    width: calc(100% - 4em);
     justify-content: space-between;
     position: absolute;
     z-index: 100;
