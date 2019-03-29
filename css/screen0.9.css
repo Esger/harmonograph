@@ -38,18 +38,6 @@ body {
     display: inline;
 }
 
-.tucked {
-    opacity: .3;
-    overflow: hidden;
-    margin-bottom: -35px;
-}
-
-footer.tucked:hover {
-    opacity: 1;
-    margin-bottom: 0;
-    overflow: auto;
-}
-
 header h1 {
     font-size: 2em;
     line-height: 2em;
@@ -90,6 +78,7 @@ footer, header {
     justify-content: space-between;
     position: absolute;
     z-index: 100;
+    pointer-events: none;
 }
 
 header {
@@ -107,6 +96,10 @@ footer {
 
 footer a, footer a:hover {
     color: #fff;
+}
+
+footer input {
+    pointer-events: all;
 }
 
 .hint {
