@@ -4,15 +4,15 @@
 <head>
     <meta http-equiv="Content-Type"
           content="text/html; charset=UTF-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Harmonograph - create Lissajous figures</title>
     <script type="text/javascript"
             src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
     <link rel="stylesheet"
           href="css/reset.css" />
     <link rel="stylesheet"
-          href="bootstrap/css/bootstrap.min.css" />
-    <link rel="stylesheet"
-          href="css/screen0.8.css" />
+          href="css/screen0.9.css" />
     <script type="text/javascript">
         var _gaq = _gaq || [];
         _gaq.push(['_setAccount', 'UA-2700808-7']);
@@ -28,10 +28,15 @@
 </head>
 
 <body>
-    <div id="container">
-        <header class="row">
-            <h1 class="span4">Online harmonograph</h1>
-            <section class="wizzard span6">
+    <div id="container"
+         class="container">
+
+        <header class="">
+            <div class="addThis">
+            </div>
+            <h1 class="">Online harmonograph</h1>
+
+            <section class="wizzard ">
                 <p>Move your mouse or finger over the canvas slowly.<br>
 				And watch the magic happen.</p>
                     <p>Click somewhere on the canvas.<br>
@@ -41,53 +46,43 @@
                             <p>Thanks for sharing.</p>
             </section>
         </header>
-        <section class="main row">
-            <canvas id="myCanvas"
-                    width="800"
-                    height="600"
-                    class="span10">
-                Please install a modern browser, <a href="http://browsehappy.com/".>Browse happy</a>
-            </canvas>
-        </section>
-        <footer class="row">
-            <section class="span6">
+
+        <canvas id="myCanvas"
+                class="myCanvas"
+                class="">
+            Please install a modern browser, <a href="http://browsehappy.com/".>Browse happy</a>
+        </canvas>
+
+        <footer class="">
+            <section class="hint">
                 <h2>Create Lissajous figures interactively</h2>
                 <p>Follow the tips and watch the magic happen.</p>
                 <p><a href="snapshot.php" class="r createSnapshot">Make a snapshot to share&hellip;</a></p>
             </section>
-            <section class="span4">
-                <label for=dimensions class="r clearfix">Dimensions <span class='ieOnly'>&hellip; enter a value from 1 to 3</span></label>
-                <input type="range" min="1" max="3" value="2" id="dimensions" class="r clearfix">
-                <p class="r clearfix"><br /><br /><a href="https://www.ashware.nl">&copy; ashWare</a></p>
+            <section class="settings">
+                <div class="setting">
+                    <input type="range" min="1" max="3" value="2" id="dimensions" class="">
+                    <label for=dimensions class="">Dimensions <span class='ieOnly'>&hellip; enter a value from 1 to 3</span></label>
+                </div>
+                <p class=""><a href="https://www.ashware.nl">&copy; ashWare</a></p>
             </section>
-
         </footer>
+
     </div>
-    <div id="ads">
-        <script type="text/javascript"
-                src="bootstrap/js/bootstrap.min.js"></script>
-        <script type="text/javascript"
-                src="js/shortcuts.min.js"></script>
-        <script type="text/javascript"
-                src="js/harmonograph0.8.js"></script>
-        <!-- <script type="text/javascript">
-                google_ad_client = "pub-9730385762916925";
-                google_ad_slot = "7545126868";
-                google_ad_width = 728;
-                google_ad_height = 90;
-        </script> -->
-        <!-- <script type="text/javascript"
-                src="https://pagead2.googlesyndication.com/pagead/show_ads.js"></script> -->
+
+    <script type="text/javascript"
+            src="js/shortcuts.min.js"></script>
+    <script type="text/javascript"
+            src="js/harmonograph0.9.js"></script>
+
+    <!-- AddThis Button BEGIN -->
+    <div class="addthis_toolbox addthis_default_style ">
+        <a class="addthis_counter addthis_pill_style"></a>
     </div>
-    <div class="addThis">
-        <!-- AddThis Button BEGIN -->
-        <div class="addthis_toolbox addthis_default_style ">
-            <a class="addthis_counter addthis_pill_style"></a>
-        </div>
-        <script type="text/javascript"
-                src="https://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4f3c4b976815089f"></script>
-        <!-- AddThis Button END -->
-    </div>
+    <script type="text/javascript"
+            src="https://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4f3c4b976815089f"></script>
+    <!-- AddThis Button END -->
+
 </body>
 
 </html>
