@@ -20,7 +20,7 @@ $(function () {
                     $elem = $canvas[0];
 
                 $canvas.on('mouseover', function () {
-                    gogogo = setInterval(harmonographController.redraw, 0);
+                    // gogogo = setInterval(harmonographController.redraw, 0);
                     harmonographController.nextTip(2);
                 });
 
@@ -37,6 +37,7 @@ $(function () {
                 $canvas.on('mousemove', function (evt) {
                     var eventPos = harmonographInterface.getEventPos($elem, evt);
                     harmonographModel.setPenParams(eventPos);
+                    requestAnimationFrame(harmonographController.redraw);
                 });
 
                 $canvas.on('click', function (evt) {
@@ -289,7 +290,7 @@ $(function () {
                         max[dim] = max[dim] * this.parameters.friction[dim];
                     }
                 }
-                // console.log(this.lissajousFigure.length);
+                console.log(this.lissajousFigure.length);
             }
         };
 
