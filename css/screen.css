@@ -34,10 +34,6 @@ body {
     display: none;
 }
 
-.msie .ieOnly {
-    display: inline;
-}
-
 header h1 {
     font-size: 2em;
     line-height: 2em;
