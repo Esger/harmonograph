@@ -20,7 +20,6 @@ $(function () {
                     $elem = $canvas[0];
 
                 $canvas.on('mouseover', function () {
-                    // gogogo = setInterval(harmonographController.redraw, 0);
                     harmonographController.nextTip(2);
                 });
 
@@ -48,12 +47,11 @@ $(function () {
 
                 $canvas.on('touchstart', function (evt) {
                     evt.preventDefault();
-                    gogogo = setInterval(harmonographController.redraw, 0);
 
                     var eventPos,
                         touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
 
-                    eventPos = harmonographInterface.getEventPos(harmonographController.$canvas, touch);
+                    eventPos = harmonographInterface.getEventPos($canvas, touch);
                     harmonographModel.setTableParams(eventPos);
 
                     harmonographController.nextTip(2);
@@ -62,7 +60,7 @@ $(function () {
                 $canvas.on('touchmove', function (evt) {
                     var eventPos;
                     var touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
-                    eventPos = harmonographInterface.getEventPos(harmonographController.$canvas, touch);
+                    eventPos = harmonographInterface.getEventPos($canvas, touch);
                     harmonographModel.setPenParams(eventPos);
                 });
 
@@ -170,6 +168,43 @@ $(function () {
                         console.log('canvas not supported');
                     }
                 }
+            },
+
+            drawGrid: function () {
+                var $canvas = $('#myCanvas'),
+                    canvasEl = $canvas[0],
+                    $body = $('body'),
+                    lines = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4],
+                    largestSide = Math.max($canvas.width(), $canvas.height());
+
+                if ($canvas.getContext) {
+                    var ctx = $canvas.getContext('2d'),
+                        x = points[1][0] + centerX,
+                        y = points[1][1] + centerY,
+                        newX, newY,
+                        f = 0.002, blue, red, green;
+                    canvasEl.width = $body.width();
+                    canvasEl.height = $body.height();
+                    canvasEl.style.width = $body.width() + 'px';
+                    canvasEl.style.height = $body.height() + 'px';
+
+                    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+                    ctx.lineWidth = 2;
+
+                    for (var a = 0; a < lines.length; a++) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        newX = largestSide;
+                        newY = lines[a] * largestSide;
+                        ctx.strokeStyle = 'rgb(245,245,245)'; // whitesmoke
+                        x = newX;
+                        y = newY;
+                        ctx.lineTo(x, y);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+
             },
 
             getEventPos: function (canvas, evt) {
