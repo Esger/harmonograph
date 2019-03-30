@@ -62,6 +62,7 @@ $(function () {
                     var touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
                     eventPos = harmonographInterface.getEventPos($canvas, touch);
                     harmonographModel.setPenParams(eventPos);
+                    requestAnimationFrame(harmonographController.redraw);
                 });
 
                 $snapShotButton.on('touchstart', function (e) {
