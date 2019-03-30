@@ -130,26 +130,43 @@ $(function () {
 
             // Draw the figure
             drawLissajous: function (points) {
-                var $canvas = $('#myCanvas')[0],
+                var $canvas = $('#myCanvas'),
+                    canvasEl = $canvas[0],
                     $body = $('body'),
-                    centerX = Math.round($canvas.width / 2),
-                    centerY = Math.round($canvas.height / 2);
+                    centerX = Math.round(canvasEl.width / 2),
+                    centerY = Math.round(canvasEl.height / 2);
 
                 if (points.length > 2) {
-                    if ($canvas.getContext) {
-                        var ctx = $canvas.getContext('2d'),
+                    if (canvasEl.getContext) {
+                        var ctx = canvasEl.getContext('2d'),
                             x = points[1][0] + centerX,
                             y = points[1][1] + centerY,
                             newX, newY,
-                            f = 0.002, blue, red, green;
+                            f = 0.002, blue, red, green,
+                            lines = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4],
+                            largestSide = Math.max(canvasEl.width, canvasEl.height);
 
                         // With special thanks to Asad at Stackoverflow for helping out with the rainbow path.
-                        $canvas.width = $body.width();
-                        $canvas.height = $body.height();
-                        $canvas.style.width = $body.width() + 'px';
-                        $canvas.style.height = $body.height() + 'px';
-                        ctx.clearRect(0, 0, $canvas.width, $canvas.height);
+                        canvasEl.width = $body.width();
+                        canvasEl.height = $body.height();
+                        canvasEl.style.width = $body.width() + 'px';
+                        canvasEl.style.height = $body.height() + 'px';
+                        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
                         ctx.lineWidth = 2;
+
+                        // draw grid
+                        for (var a = 0; a < lines.length; a++) {
+                            ctx.beginPath();
+                            ctx.moveTo(0, 0);
+                            newX = largestSide;
+                            newY = lines[a] * largestSide;
+                            ctx.strokeStyle = 'rgba(245,245,245,0.1)'; // whitesmoke
+                            ctx.lineTo(newX, newY);
+                            ctx.stroke();
+                            ctx.closePath();
+                        }
+
+                        // draw lissajous
                         for (var count = 2; count < points.length; count++) {
                             ctx.beginPath();
                             ctx.moveTo(x, y);
@@ -171,42 +188,28 @@ $(function () {
                 }
             },
 
-            drawGrid: function () {
-                var $canvas = $('#myCanvas'),
-                    canvasEl = $canvas[0],
-                    $body = $('body'),
-                    lines = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4],
-                    largestSide = Math.max($canvas.width(), $canvas.height());
+            // drawGrid: function () {
+            //     var $canvas = $('#myCanvas'),
+            //         canvasEl = $canvas[0],
+            //         $body = $('body'),
 
-                if ($canvas.getContext) {
-                    var ctx = $canvas.getContext('2d'),
-                        x = points[1][0] + centerX,
-                        y = points[1][1] + centerY,
-                        newX, newY,
-                        f = 0.002, blue, red, green;
-                    canvasEl.width = $body.width();
-                    canvasEl.height = $body.height();
-                    canvasEl.style.width = $body.width() + 'px';
-                    canvasEl.style.height = $body.height() + 'px';
+            //     if ($canvas.getContext) {
+            //         var ctx = $canvas.getContext('2d'),
+            //             x = points[1][0] + centerX,
+            //             y = points[1][1] + centerY,
+            //             newX, newY,
+            //             f = 0.002, blue, red, green;
+            //         canvasEl.width = $body.width();
+            //         canvasEl.height = $body.height();
+            //         canvasEl.style.width = $body.width() + 'px';
+            //         canvasEl.style.height = $body.height() + 'px';
 
-                    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-                    ctx.lineWidth = 2;
+            //         ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            //         ctx.lineWidth = 2;
 
-                    for (var a = 0; a < lines.length; a++) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, 0);
-                        newX = largestSide;
-                        newY = lines[a] * largestSide;
-                        ctx.strokeStyle = 'rgb(245,245,245)'; // whitesmoke
-                        x = newX;
-                        y = newY;
-                        ctx.lineTo(x, y);
-                        ctx.stroke();
-                        ctx.closePath();
-                    }
-                }
+            //     }
 
-            },
+            // },
 
             getEventPos: function (canvas, evt) {
                 // get canvas position
