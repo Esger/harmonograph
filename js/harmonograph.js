@@ -17,7 +17,9 @@ $(function () {
                     $snapShotButton = $('.createSnapshot'),
                     $dimensions = $('#dimensions'),
                     $canvas = $('#myCanvas'),
-                    $elem = $canvas[0];
+                    $elem = $canvas[0],
+                    shiftPressed = false,
+                    harmonics = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4];
 
                 $canvas.on('mouseover', function () {
                     harmonographController.nextTip(2);
@@ -41,7 +43,7 @@ $(function () {
 
                 $canvas.on('click', function (evt) {
                     var eventPos = harmonographInterface.getEventPos($elem, evt);
-                    harmonographModel.setTableParams(eventPos);
+                    harmonographModel.setTableParams(eventPos, shiftPressed);
                     harmonographController.nextTip(3);
                 });
 
@@ -84,9 +86,21 @@ $(function () {
                     newHref = h + '?imageId=' + harmonographInterface.imageId;
                     window.open(newHref);
                 });
+
                 $dimensions.on('change', function () {
                     harmonographModel.setDimensions(this.value);
                 });
+
+                $(document).on('keydown', function (e) {
+                    if (e.keyCode == 16) {
+                        harmonographInterface.constrain = true;
+                    }
+                }).on('keyup', function (e) {
+                    if (e.keyCode == 16) {
+                        harmonographInterface.constrain = false;
+                    }
+                });
+
             },
 
             redraw: function () {
@@ -100,7 +114,6 @@ $(function () {
 
             init: function () {
                 harmonographInterface.touchDevice();
-                harmonographInterface.ieRangefix();
                 this.addListeners();
                 this.redraw();
                 harmonographInterface.addSharingShortCut();
@@ -112,19 +125,12 @@ $(function () {
         var harmonographInterface = {
 
             currentTip: 1,
+            constrain: false,
 
             // Check if it is a touch device
             touchDevice: function () {
                 if ('ontouchstart' in document.documentElement) {
                     $('body').addClass('touchDevice');
-                }
-            },
-
-            ieRangefix: function () {
-                if ($.browser.msie) {
-                    if (parseInt($.browser.version, 10) < 10) {
-                        $('body').addClass('msie');
-                    }
                 }
             },
 
@@ -188,49 +194,30 @@ $(function () {
                 }
             },
 
-            // drawGrid: function () {
-            //     var $canvas = $('#myCanvas'),
-            //         canvasEl = $canvas[0],
-            //         $body = $('body'),
-
-            //     if ($canvas.getContext) {
-            //         var ctx = $canvas.getContext('2d'),
-            //             x = points[1][0] + centerX,
-            //             y = points[1][1] + centerY,
-            //             newX, newY,
-            //             f = 0.002, blue, red, green;
-            //         canvasEl.width = $body.width();
-            //         canvasEl.height = $body.height();
-            //         canvasEl.style.width = $body.width() + 'px';
-            //         canvasEl.style.height = $body.height() + 'px';
-
-            //         ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-            //         ctx.lineWidth = 2;
-
-            //     }
-
-            // },
-
             getEventPos: function (canvas, evt) {
                 // get canvas position
-                var obj = canvas,
-                    top = 0,
-                    left = 0;
+                // var obj = canvas,
+                //     top = 0,
+                //     left = 0;
 
-                while (obj && obj.tagName !== 'BODY') {
-                    top += obj.offsetTop;
-                    left += obj.offsetLeft;
-                    obj = obj.offsetParent;
-                }
+                // while (obj && obj.tagName !== 'BODY') {
+                //     top += obj.offsetTop;
+                //     left += obj.offsetLeft;
+                //     obj = obj.offsetParent;
+                // }
 
                 // return relative mouse position
-                var mouseX = evt.clientX - left + window.pageXOffset,
-                    mouseY = evt.clientY - top + window.pageYOffset;
+                // var mouseX = evt.clientX - left + window.pageXOffset,
+                //     mouseY = evt.clientY - top + window.pageYOffset;
 
                 return {
-                    x: mouseX,
-                    y: mouseY
+                    x: evt.clientX,
+                    y: evt.clientY
                 };
+                // return {
+                //     x: mouseX,
+                //     y: mouseY
+                // };
             },
 
             imageId: 0,
@@ -329,7 +316,7 @@ $(function () {
                         max[dim] = max[dim] * this.parameters.friction[dim];
                     }
                 }
-                console.log(this.lissajousFigure.length);
+                // console.log(this.lissajousFigure.length);
             }
         };
 
