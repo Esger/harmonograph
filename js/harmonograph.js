@@ -11,39 +11,37 @@ $(function () {
 
         var harmonographController = {
 
+            shiftPressed: false,
+
             addListeners: function () {
 
                 var gogogo = null,
                     $snapShotButton = $('.createSnapshot'),
                     $dimensions = $('#dimensions'),
                     $canvas = $('#myCanvas'),
-                    $elem = $canvas[0],
-                    shiftPressed = false,
-                    harmonics = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4];
+                    $elem = $canvas[0];
 
                 $canvas.on('mouseover', function () {
                     harmonographController.nextTip(2);
                 });
 
                 $canvas.on('mouseout', function () {
-                    clearInterval(gogogo);
                     harmonographController.nextTip(4);
                 });
 
                 $canvas.on('touchend', function () {
-                    clearInterval(gogogo);
                     harmonographController.nextTip(4);
                 });
 
                 $canvas.on('mousemove', function (evt) {
-                    var eventPos = harmonographInterface.getEventPos($elem, evt);
+                    var eventPos = harmonographInterface.getEventPos(evt, harmonographController.shiftPressed);
                     harmonographModel.setPenParams(eventPos);
                     requestAnimationFrame(harmonographController.redraw);
                 });
 
                 $canvas.on('click', function (evt) {
-                    var eventPos = harmonographInterface.getEventPos($elem, evt);
-                    harmonographModel.setTableParams(eventPos, shiftPressed);
+                    var eventPos = harmonographInterface.getEventPos(evt, harmonographController.shiftPressed);
+                    harmonographModel.setTableParams(eventPos);
                     harmonographController.nextTip(3);
                 });
 
@@ -53,7 +51,7 @@ $(function () {
                     var eventPos,
                         touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
 
-                    eventPos = harmonographInterface.getEventPos($canvas, touch);
+                    eventPos = harmonographInterface.getEventPos(touch);
                     harmonographModel.setTableParams(eventPos);
 
                     harmonographController.nextTip(2);
@@ -62,7 +60,7 @@ $(function () {
                 $canvas.on('touchmove', function (evt) {
                     var eventPos;
                     var touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
-                    eventPos = harmonographInterface.getEventPos($canvas, touch);
+                    eventPos = harmonographInterface.getEventPos(touch);
                     harmonographModel.setPenParams(eventPos);
                     requestAnimationFrame(harmonographController.redraw);
                 });
@@ -93,11 +91,13 @@ $(function () {
 
                 $(document).on('keydown', function (e) {
                     if (e.keyCode == 16) {
-                        harmonographInterface.constrain = true;
+                        harmonographController.shiftPressed = true;
+                        harmonographController.redraw();
                     }
                 }).on('keyup', function (e) {
                     if (e.keyCode == 16) {
-                        harmonographInterface.constrain = false;
+                        harmonographController.shiftPressed = false;
+                        harmonographController.redraw();
                     }
                 });
 
@@ -105,11 +105,11 @@ $(function () {
 
             redraw: function () {
                 harmonographModel.generateLissajous();
-                harmonographInterface.drawLissajous(harmonographModel.lissajousFigure);
+                harmonographInterface.drawLissajous(harmonographModel.lissajousFigure, harmonographController.shiftPressed);
             },
 
             nextTip: function (tipNumber) {
-                setTimeout(function () { harmonographInterface.showNextTip(tipNumber); }, 3000);
+                setTimeout(function () { harmonographInterface.showNextTip(tipNumber); }, 7000);
             },
 
             init: function () {
@@ -124,9 +124,6 @@ $(function () {
 
         var harmonographInterface = {
 
-            currentTip: 1,
-            constrain: false,
-
             // Check if it is a touch device
             touchDevice: function () {
                 if ('ontouchstart' in document.documentElement) {
@@ -135,7 +132,7 @@ $(function () {
             },
 
             // Draw the figure
-            drawLissajous: function (points) {
+            drawLissajous: function (points, grid = false) {
                 var $canvas = $('#myCanvas'),
                     canvasEl = $canvas[0],
                     $body = $('body'),
@@ -161,15 +158,17 @@ $(function () {
                         ctx.lineWidth = 2;
 
                         // draw grid
-                        for (var a = 0; a < lines.length; a++) {
-                            ctx.beginPath();
-                            ctx.moveTo(0, 0);
-                            newX = largestSide;
-                            newY = lines[a] * largestSide;
-                            ctx.strokeStyle = 'rgba(245,245,245,0.1)'; // whitesmoke
-                            ctx.lineTo(newX, newY);
-                            ctx.stroke();
-                            ctx.closePath();
+                        if (grid) {
+                            for (var a = 0; a < lines.length; a++) {
+                                ctx.beginPath();
+                                ctx.moveTo(0, 0);
+                                newX = largestSide;
+                                newY = lines[a] * largestSide;
+                                ctx.strokeStyle = 'rgba(245,245,245,0.1)'; // whitesmoke
+                                ctx.lineTo(newX, newY);
+                                ctx.stroke();
+                                ctx.closePath();
+                            }
                         }
 
                         // draw lissajous
@@ -194,30 +193,26 @@ $(function () {
                 }
             },
 
-            getEventPos: function (canvas, evt) {
-                // get canvas position
-                // var obj = canvas,
-                //     top = 0,
-                //     left = 0;
+            getEventPos: function (evt, constrain = false) {
+                var x = evt.clientX,
+                    y = evt.clientY,
+                    ratio, closestRatio,
+                    harmonics = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4];
 
-                // while (obj && obj.tagName !== 'BODY') {
-                //     top += obj.offsetTop;
-                //     left += obj.offsetLeft;
-                //     obj = obj.offsetParent;
-                // }
-
-                // return relative mouse position
-                // var mouseX = evt.clientX - left + window.pageXOffset,
-                //     mouseY = evt.clientY - top + window.pageYOffset;
-
+                if (y > 0) {
+                    ratio = x / y;
+                }
+                if (constrain) {
+                    closestRatio = harmonics.reduce(function (prev, curr) {
+                        return (Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev);
+                    });
+                    y = x / closestRatio;
+                }
+                console.log(constrain, x, y);
                 return {
-                    x: evt.clientX,
-                    y: evt.clientY
+                    x: x,
+                    y: y
                 };
-                // return {
-                //     x: mouseX,
-                //     y: mouseY
-                // };
             },
 
             imageId: 0,
