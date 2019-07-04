@@ -11,6 +11,8 @@ $(function () {
 
         var harmonographController = {
 
+            shiftPressed: false,
+
             addListeners: function () {
 
                 var gogogo = null,
@@ -20,39 +22,36 @@ $(function () {
                     $elem = $canvas[0];
 
                 $canvas.on('mouseover', function () {
-                    gogogo = setInterval(harmonographController.redraw, 0);
                     harmonographController.nextTip(2);
                 });
 
                 $canvas.on('mouseout', function () {
-                    clearInterval(gogogo);
                     harmonographController.nextTip(4);
                 });
 
                 $canvas.on('touchend', function () {
-                    clearInterval(gogogo);
                     harmonographController.nextTip(4);
                 });
 
                 $canvas.on('mousemove', function (evt) {
-                    var eventPos = harmonographInterface.getEventPos($elem, evt);
+                    var eventPos = harmonographInterface.getEventPos(evt, harmonographController.shiftPressed);
                     harmonographModel.setPenParams(eventPos);
+                    requestAnimationFrame(harmonographController.redraw);
                 });
 
                 $canvas.on('click', function (evt) {
-                    var eventPos = harmonographInterface.getEventPos($elem, evt);
+                    var eventPos = harmonographInterface.getEventPos(evt, harmonographController.shiftPressed);
                     harmonographModel.setTableParams(eventPos);
                     harmonographController.nextTip(3);
                 });
 
                 $canvas.on('touchstart', function (evt) {
                     evt.preventDefault();
-                    gogogo = setInterval(harmonographController.redraw, 0);
 
                     var eventPos,
                         touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
 
-                    eventPos = harmonographInterface.getEventPos(harmonographController.$canvas, touch);
+                    eventPos = harmonographInterface.getEventPos(touch);
                     harmonographModel.setTableParams(eventPos);
 
                     harmonographController.nextTip(2);
@@ -61,59 +60,69 @@ $(function () {
                 $canvas.on('touchmove', function (evt) {
                     var eventPos;
                     var touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
-                    eventPos = harmonographInterface.getEventPos(harmonographController.$canvas, touch);
+                    eventPos = harmonographInterface.getEventPos(touch);
                     harmonographModel.setPenParams(eventPos);
+                    requestAnimationFrame(harmonographController.redraw);
                 });
 
-                // $snapShotButton.on('touchstart', function (e) {
-                // 	e.preventDefault(); // don't follow the link before the image is saved
-                // 	var anchor = $(this), h,
-                // 	newHref;
-                // 	h = anchor.attr('href');
-                // 	harmonographInterface.saveHarmonogram(harmonographInterface.newimageId());
-                // 	newHref = h + '?imageId=' + harmonographInterface.imageId;
-                // 	window.location = newHref;
-                // });
+                $snapShotButton.on('touchstart', function (e) {
+                    e.preventDefault(); // don't follow the link before the image is saved
+                    var anchor = $(this), h,
+                        newHref;
+                    h = anchor.attr('href');
+                    harmonographInterface.saveHarmonogram(harmonographInterface.newimageId());
+                    newHref = h + '?imageId=' + harmonographInterface.imageId;
+                    window.location = newHref;
+                });
 
-                // $snapShotButton.on('click', function (e) {
-                // 	e.preventDefault(); // don't follow the link before the image is saved
-                // 	var anchor = $(this), h,
-                // 	newHref;
-                // 	h = anchor.attr('href');
-                // 	harmonographInterface.saveHarmonogram(harmonographInterface.newimageId());
-                // 	newHref = h + '?imageId=' + harmonographInterface.imageId;
-                // 	window.open(newHref);
-                // });
+                $snapShotButton.on('click', function (e) {
+                    e.preventDefault(); // don't follow the link before the image is saved
+                    var anchor = $(this), h,
+                        newHref;
+                    h = anchor.attr('href');
+                    harmonographInterface.saveHarmonogram(harmonographInterface.newimageId());
+                    newHref = h + '?imageId=' + harmonographInterface.imageId;
+                    window.open(newHref);
+                });
+
                 $dimensions.on('change', function () {
                     harmonographModel.setDimensions(this.value);
                 });
+
+                $(document).on('keydown', function (e) {
+                    if (e.keyCode == 16) {
+                        harmonographController.shiftPressed = true;
+                        harmonographController.redraw();
+                    }
+                }).on('keyup', function (e) {
+                    if (e.keyCode == 16) {
+                        harmonographController.shiftPressed = false;
+                        harmonographController.redraw();
+                    }
+                });
+
             },
 
             redraw: function () {
                 harmonographModel.generateLissajous();
-                harmonographInterface.drawLissajous(harmonographModel.lissajousFigure);
+                harmonographInterface.drawLissajous(harmonographModel.lissajousFigure, harmonographController.shiftPressed);
             },
 
             nextTip: function (tipNumber) {
-                setTimeout(function () {
-                    harmonographInterface.showNextTip(tipNumber);
-                }, 3000);
+                setTimeout(function () { harmonographInterface.showNextTip(tipNumber); }, 7000);
             },
 
             init: function () {
                 harmonographInterface.touchDevice();
-                harmonographInterface.ieRangefix();
                 this.addListeners();
                 this.redraw();
-                // harmonographInterface.addSharingShortCut();
+                harmonographInterface.addSharingShortCut();
                 this.nextTip(1);
             }
 
         };
 
         var harmonographInterface = {
-
-            currentTip: 1,
 
             // Check if it is a touch device
             touchDevice: function () {
@@ -122,31 +131,47 @@ $(function () {
                 }
             },
 
-            ieRangefix: function () {
-                if ($.browser.msie) {
-                    if (parseInt($.browser.version, 10) < 10) {
-                        $('body').addClass('msie');
-                    }
-                }
-            },
-
             // Draw the figure
-            drawLissajous: function (points) {
-                var $canvas = $('#myCanvas')[0],
-                    centerX = Math.round($canvas.width / 2),
-                    centerY = Math.round($canvas.height / 2);
+            drawLissajous: function (points, grid = false) {
+                var $canvas = $('#myCanvas'),
+                    canvasEl = $canvas[0],
+                    $body = $('body'),
+                    centerX = Math.round(canvasEl.width / 2),
+                    centerY = Math.round(canvasEl.height / 2);
 
                 if (points.length > 2) {
-                    if ($canvas.getContext) {
-                        var ctx = $canvas.getContext('2d'),
+                    if (canvasEl.getContext) {
+                        var ctx = canvasEl.getContext('2d'),
                             x = points[1][0] + centerX,
                             y = points[1][1] + centerY,
                             newX, newY,
-                            f = 0.002, blue, red, green;
+                            f = 0.002, blue, red, green,
+                            lines = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4],
+                            largestSide = Math.max(canvasEl.width, canvasEl.height);
 
                         // With special thanks to Asad at Stackoverflow for helping out with the rainbow path.
-                        ctx.clearRect(0, 0, $canvas.width, $canvas.height);
+                        canvasEl.width = $body.width();
+                        canvasEl.height = $body.height();
+                        canvasEl.style.width = $body.width() + 'px';
+                        canvasEl.style.height = $body.height() + 'px';
+                        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
                         ctx.lineWidth = 2;
+
+                        // draw grid
+                        if (grid) {
+                            for (var a = 0; a < lines.length; a++) {
+                                ctx.beginPath();
+                                ctx.moveTo(0, 0);
+                                newX = largestSide;
+                                newY = lines[a] * largestSide;
+                                ctx.strokeStyle = 'rgba(245,245,245,0.1)'; // whitesmoke
+                                ctx.lineTo(newX, newY);
+                                ctx.stroke();
+                                ctx.closePath();
+                            }
+                        }
+
+                        // draw lissajous
                         for (var count = 2; count < points.length; count++) {
                             ctx.beginPath();
                             ctx.moveTo(x, y);
@@ -168,25 +193,25 @@ $(function () {
                 }
             },
 
-            getEventPos: function (canvas, evt) {
-                // get canvas position
-                var obj = canvas,
-                    top = 0,
-                    left = 0;
+            getEventPos: function (evt, constrain = false) {
+                var x = evt.clientX,
+                    y = evt.clientY,
+                    ratio, closestRatio,
+                    harmonics = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4];
 
-                while (obj && obj.tagName !== 'BODY') {
-                    top += obj.offsetTop;
-                    left += obj.offsetLeft;
-                    obj = obj.offsetParent;
+                if (y > 0) {
+                    ratio = x / y;
                 }
-
-                // return relative mouse position
-                var mouseX = evt.clientX - left + window.pageXOffset,
-                    mouseY = evt.clientY - top + window.pageYOffset;
-
+                if (constrain) {
+                    closestRatio = harmonics.reduce(function (prev, curr) {
+                        return (Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev);
+                    });
+                    y = x / closestRatio;
+                }
+                console.log(constrain, x, y);
                 return {
-                    x: mouseX,
-                    y: mouseY
+                    x: x,
+                    y: y
                 };
             },
 
@@ -198,25 +223,25 @@ $(function () {
             newHref: null,
 
             // Save the canvasdata as image with random number in name.
-            // saveHarmonogram : function () {
-            // 	var $canvas = $('#myCanvas')[0],
-            // 	canvasData = $canvas.toDataURL("image/png"),
-            // 	ajax = new XMLHttpRequest();
+            saveHarmonogram: function () {
+                var $canvas = $('#myCanvas')[0],
+                    canvasData = $canvas.toDataURL("image/png"),
+                    ajax = new XMLHttpRequest();
 
-            // 	this.newimageId();
-            // 	this.newHref = 'snapshot.php' + '?imageId=' + this.imageId;
-            // 	ajax.open("POST",this.newHref,false);
-            // 	ajax.setRequestHeader('Content-Type', 'application/upload');
-            // 	ajax.send(canvasData);
-            // 	//window.open('your-harmonogram.php?imageId='+ imgId);
-            // },
+                this.newimageId();
+                this.newHref = 'snapshot.php' + '?imageId=' + this.imageId;
+                ajax.open("POST", this.newHref, false);
+                ajax.setRequestHeader('Content-Type', 'application/upload');
+                ajax.send(canvasData);
+                //window.open('your-harmonogram.php?imageId='+ imgId);
+            },
 
-            // addSharingShortCut : function () {
-            // 	shortcut.add('Space', function () {
-            // 		harmonographInterface.saveHarmonogram();
-            // 		window.location = harmonographInterface.newHref;
-            // 	});	
-            // },
+            addSharingShortCut: function () {
+                shortcut.add('Space', function () {
+                    harmonographInterface.saveHarmonogram();
+                    window.location = harmonographInterface.newHref;
+                });
+            },
 
             showNextTip: function (tipNumber) {
                 $('.wizzard p').removeClass('active');
@@ -229,25 +254,25 @@ $(function () {
             parameters: {
                 dimensions: 2,
                 amplitudes: [250, 250, 100, 0],
-                stepSizes: [Math.PI / 45, Math.PI / 45, Math.PI / 45, Math.PI / 45,],
-                friction: 0.9992,
+                stepSizes: [Math.PI / 45, Math.PI / 45, Math.PI / 45, Math.PI / 45],
+                friction: [0.9992, 0.9992, 0.9996, 0.9996]
             },
 
             lissajousFigure: [],
 
             setPenParams: function (ePos) {
-                this.parameters.amplitudes[0] = Math.sqrt(ePos.x) * 10;
-                this.parameters.amplitudes[1] = Math.sqrt(ePos.y) * 10;
+                this.parameters.amplitudes[0] = Math.sqrt(ePos.x) * 15;
+                this.parameters.amplitudes[1] = Math.sqrt(ePos.y) * 15;
                 this.parameters.stepSizes[0] = Math.sqrt(ePos.y) / ePos.x;
                 this.parameters.stepSizes[1] = Math.sqrt(ePos.x) / ePos.y;
             },
 
             setTableParams: function (ePos) {
-                this.parameters.amplitudes[2] = Math.sqrt(ePos.x) * 10;
+                this.parameters.amplitudes[2] = Math.sqrt(ePos.x) * 15;
                 if (this.parameters.dimensions < 3) {
                     this.parameters.amplitudes[3] = 0;
                 } else {
-                    this.parameters.amplitudes[3] = Math.sqrt(ePos.y) * 10;
+                    this.parameters.amplitudes[3] = Math.sqrt(ePos.y) * 15;
                 }
                 this.parameters.stepSizes[2] = Math.sqrt(ePos.y) / ePos.x;
                 this.parameters.stepSizes[3] = Math.sqrt(ePos.x) / ePos.y;
@@ -268,8 +293,7 @@ $(function () {
 
                     // Calc points
                     point = [0, 0];
-                    var dim;
-                    for (dim = 0; dim <= this.parameters.dimensions; dim += 2) {
+                    for (var dim = 0; dim <= this.parameters.dimensions; dim += 2) {
                         point[0] += (Math.sin(angle[dim]) * max[dim]);
                         point[1] += (Math.cos(angle[dim + 1]) * max[dim + 1]);
                     }
@@ -284,9 +308,10 @@ $(function () {
 
                     //Apply friction with factor < 0 to Amplitudes   
                     for (dim = 0; dim <= this.parameters.dimensions; dim++) {
-                        max[dim] = max[dim] * this.parameters.friction;
+                        max[dim] = max[dim] * this.parameters.friction[dim];
                     }
                 }
+                // console.log(this.lissajousFigure.length);
             }
         };
 
