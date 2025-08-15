@@ -3,8 +3,8 @@ $(function () {
     "use strict";
 
     (function () {
-		/* Make the mod function work properly so negative numbers return a correct positive value
-		http://javascript.about.com/od/problemsolving/a/modulobug.htm */
+        /* Make the mod function work properly so negative numbers return a correct positive value
+        http://javascript.about.com/od/problemsolving/a/modulobug.htm */
         Number.prototype.mod = function (n) {
             return ((this % n) + n) % n;
         };
@@ -113,7 +113,7 @@ $(function () {
             },
 
             init: function () {
-                harmonographInterface.touchDevice();
+                harmonographInterface.detectEnvironment();
                 this.addListeners();
                 this.redraw();
                 harmonographInterface.addSharingShortCut();
@@ -125,9 +125,13 @@ $(function () {
         var harmonographInterface = {
 
             // Check if it is a touch device
-            touchDevice: function () {
+            detectEnvironment: function () {
                 if ('ontouchstart' in document.documentElement) {
                     $('body').addClass('touchDevice');
+                }
+                if (window.parent !== window) {
+                    // document is being loaded in an iframe
+                    $('body').addClass('isIframed');
                 }
             },
 

@@ -1,29 +1,41 @@
 @charset "utf-8";
+
 /* CSS Document */
-body, html {
-    font: normal 12px / 20px "Trebuchet MS", Arial, Helvetica, sans-serif;
-    color: #eeeeee;
-    height: 100vh;
-    width: 100vw;
-    margin: 0;
+body,
+html {
+    font            : normal 12px / 20px "Trebuchet MS", Arial, Helvetica, sans-serif;
+    color           : #eeeeee;
+    height          : 100vh;
+    width           : 100vw;
+    margin          : 0;
     background-color: black;
-    overflow: hidden;
+    overflow        : hidden;
+}
+
+html.isIframed {
+    width : 100%;
+    height: 100%;
+
+    body {
+        width : 100%;
+        height: 100%;
+    }
 }
 
 body {
-    display: flex;
+    display        : flex;
     justify-content: center;
-    align-items: center;
+    align-items    : center;
 }
 
 .container {
-    display: flex;
-    flex-direction: column;
+    display        : flex;
+    flex-direction : column;
     justify-content: stretch;
-    position: relative;
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
+    position       : relative;
+    height         : 100vh;
+    width          : 100vw;
+    overflow       : hidden;
 }
 
 .row {
@@ -35,14 +47,14 @@ body {
 }
 
 header h1 {
-    font-size: 2em;
+    font-size  : 2em;
     line-height: 2em;
-    margin: .5em 0 !important;
-    text-align: center;
+    margin     : .5em 0 !important;
+    text-align : center;
 }
 
 h2 {
-    font-size: 1.4em;
+    font-size  : 1.4em;
     line-height: 1.4em;
 }
 
@@ -51,47 +63,58 @@ p {
 }
 
 ul {
-    list-style: disc;
+    list-style : disc;
     margin-left: 15px;
 }
 
 a {
-    outline: none;
-    color: #404000;
+    outline        : none;
+    color          : #404000;
     text-decoration: none;
 }
 
 strong {
     letter-spacing: 1px;
-    font-size: 18px;
+    font-size     : 18px;
 }
 
-footer, header {
-    position: absolute;
-    display: flex;
-    flex: 1 0 20vh;
-    margin: 2em;
-    width: calc(100% - 4em);
+footer,
+header {
+    position       : absolute;
+    display        : flex;
+    flex           : 1 0 20vh;
+    margin         : 2em;
+    width          : calc(100% - 4em);
     justify-content: space-between;
-    position: absolute;
-    z-index: 100;
-    pointer-events: none;
+    position       : absolute;
+    z-index        : 100;
+    pointer-events : none;
+
+    @media screen and (max-width: 400px) {
+        display: none;
+    }
+
+    @media screen and (max-height: 400px) {
+        display: none;
+    }
 }
 
 header {
     top: 0;
 }
 
-footer > *, header > * {
+footer>*,
+header>* {
     flex: 0 0 30vw;
 }
 
 footer {
-    bottom: 0;
+    bottom     : 0;
     align-items: stretch;
 }
 
-footer a, footer a:hover {
+footer a,
+footer a:hover {
     color: #fff;
 }
 
@@ -103,23 +126,23 @@ footer input {
     text-align: left;
 }
 
-.hint > * {
+.hint>* {
     margin: 10px 0;
 }
 
 .settings {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
+    text-align     : right;
+    display        : flex;
+    flex-direction : column;
     justify-content: space-between;
 }
 
 .setting {
-    display: flex;
+    display        : flex;
     justify-content: flex-end;
 }
 
-.setting > * {
+.setting>* {
     margin-left: 1vw;
 }
 
@@ -128,17 +151,17 @@ footer input {
 }
 
 .wizzard p {
-    position: absolute;
-    right: 0;
-    padding: 20px;
-    background-color: rgba(255, 255, 255, .3);
-    color: rgba(255, 255, 255, .3);
-    border: 1px solid rgba(255, 255, 255, .5);
+    position             : absolute;
+    right                : 0;
+    padding              : 20px;
+    background-color     : rgba(255, 255, 255, .3);
+    color                : rgba(255, 255, 255, .3);
+    border               : 1px solid rgba(255, 255, 255, .5);
     -webkit-border-radius: 10px;
-    border-radius: 10px;
-    opacity: 0;
-    transition: opacity .5s ease-in-out;
-    -webkit-transition: opacity .5s ease-in-out;
+    border-radius        : 10px;
+    opacity              : 0;
+    transition           : opacity .5s ease-in-out;
+    -webkit-transition   : opacity .5s ease-in-out;
 }
 
 .wizzard p.active {
@@ -146,12 +169,12 @@ footer input {
 }
 
 .myCanvas {
-    border: 0 solid black;
+    border          : 0 solid black;
     background-color: #000;
-    width: 100%;
-    height: 100%;
-    color: #404000;
-    font: 8px bold 'trebuchet MS';
+    width           : 100%;
+    height          : 100%;
+    color           : #404000;
+    font            : 8px bold 'trebuchet MS';
 }
 
 .createSnapshot {
@@ -159,7 +182,7 @@ footer input {
 }
 
 .touchDevice .createSnapshot {
-    display: inline;
+    display        : inline;
     text-decoration: underline;
 }
 
