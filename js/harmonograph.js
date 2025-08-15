@@ -192,7 +192,7 @@ $(function () {
                             ctx.closePath();
                         }
                     } else {
-                        console.log('canvas not supported');
+                        console.error('canvas not supported');
                     }
                 }
             },
@@ -212,7 +212,7 @@ $(function () {
                     });
                     y = x / closestRatio;
                 }
-                console.log(constrain, x, y);
+                console.info(constrain, x, y);
                 return {
                     x: x,
                     y: y
