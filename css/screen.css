@@ -120,10 +120,14 @@ footer input {
 
 .hint {
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .hint>* {
-    margin: 10px 0;
+    margin: 20px 0 0;
 }
 
 .settings {
@@ -140,6 +144,12 @@ footer input {
 
 .setting>* {
     margin-left: 1vw;
+}
+
+.setting output {
+    width: 30px;
+    text-align: left;
+    display: inline-block;
 }
 
 .wizzard {

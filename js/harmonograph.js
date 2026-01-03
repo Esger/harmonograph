@@ -19,6 +19,8 @@ $(function () {
                     $snapShotButton = $('.createSnapshot'),
                     $dimensions = $('#dimensions'),
                     $thickness = $('#thickness'),
+                    $rotation = $('#rotation'),
+                    $damping = $('#damping'),
                     $canvas = $('#myCanvas'),
                     $elem = $canvas[0];
 
@@ -87,11 +89,26 @@ $(function () {
                 });
 
                 $dimensions.on('change', function () {
+                    $(this).next('output').val(this.value);
                     harmonographModel.setDimensions(this.value);
+                    harmonographController.redraw();
                 });
 
                 $thickness.on('input change', function () {
+                    $(this).next('output').val(this.value);
                     harmonographModel.setThickness(this.value);
+                    harmonographController.redraw();
+                });
+
+                $rotation.on('input change', function () {
+                    $(this).next('output').val(this.value);
+                    harmonographModel.setRotation(this.value);
+                    harmonographController.redraw();
+                });
+
+                $damping.on('input change', function () {
+                    $(this).next('output').val(this.value);
+                    harmonographModel.setDamping(this.value);
                     harmonographController.redraw();
                 });
 
@@ -263,10 +280,13 @@ $(function () {
 
             parameters: {
                 dimensions: 2,
-                amplitudes: [250, 250, 100, 0],
-                stepSizes: [Math.PI / 45, Math.PI / 45, Math.PI / 45, Math.PI / 45],
-                friction: [0.9992, 0.9992, 0.9996, 0.9996],
-                thickness: 2
+                amplitudes: [250, 250, 250, 250],
+                stepSizes: [Math.PI / 45, Math.PI / 45.1, Math.PI / 45.2, Math.PI / 45.3],
+                phases: [0, Math.PI / 2, Math.PI / 4, Math.PI / 3],
+                friction: [0.9992, 0.9992, 0.9992, 0.9992],
+                thickness: 1,
+                rotationAmplitude: 3.14,
+                rotationStepSize: Math.PI / 100
             },
 
             lissajousFigure: [],
@@ -290,43 +310,71 @@ $(function () {
             },
 
             setDimensions: function (val) {
-                this.parameters.dimensions = val;
+                this.parameters.dimensions = parseInt(val);
             },
 
             setThickness: function (val) {
-                this.parameters.thickness = val;
+                this.parameters.thickness = parseFloat(val);
+            },
+
+            setRotation: function (val) {
+                this.parameters.rotationAmplitude = parseFloat(val) * Math.PI * 2;
+            },
+
+            setDamping: function (val) {
+                var percentage = parseFloat(val);
+                // Map 0% -> 0.9999 (least damping/long life)
+                // Map 100% -> 0.9990 (most damping/short life)
+                var d = 0.9999 - (percentage / 100) * 0.0009;
+                for (var i = 0; i < 4; i++) {
+                    this.parameters.friction[i] = d;
+                }
             },
 
             generateLissajous: function () {
-                var point = [0, 0],
+                var rawX, rawY, rotatedX, rotatedY,
                     max = this.parameters.amplitudes.slice(),
-                    angle = [0, 0, 0, 0];
+                    angle = [0, 0, 0, 0],
+                    rotTimer = 0,
+                    rotAngle = 0,
+                    dampingRatio = 1;
 
                 this.lissajousFigure = [];
 
-                while ((max[0] > 5) || (max[1] > 5)) {
+                // Continue as long as any significant pendulum is still moving
+                var limit = 2; // End when amplitude drops below 2 pixels
+                var counts = 0;
 
-                    // Calc points
-                    point = [0, 0];
-                    for (var dim = 0; dim <= this.parameters.dimensions; dim += 2) {
-                        point[0] += (Math.sin(angle[dim]) * max[dim]);
-                        point[1] += (Math.cos(angle[dim + 1]) * max[dim + 1]);
+                while ((max[0] > limit || max[1] > limit || max[2] > limit || max[3] > limit) && counts < 8000) {
+                    counts++;
+
+                    // Pendulum decay ratio for rotation
+                    dampingRatio = max[0] / this.parameters.amplitudes[0];
+
+                    // Calc raw pendulum positions
+                    rawX = 0;
+                    rawY = 0;
+
+                    if (this.parameters.dimensions >= 1) rawX += Math.sin(angle[0] + this.parameters.phases[0]) * max[0];
+                    if (this.parameters.dimensions >= 2) rawY += Math.cos(angle[1] + this.parameters.phases[1]) * max[1];
+                    if (this.parameters.dimensions >= 3) rawX += Math.sin(angle[2] + this.parameters.phases[2]) * max[2];
+                    if (this.parameters.dimensions >= 4) rawY += Math.cos(angle[3] + this.parameters.phases[3]) * max[3];
+
+                    // Apply Rotary Oscillation (Swing)
+                    rotAngle = this.parameters.rotationAmplitude * Math.sin(rotTimer) * dampingRatio;
+
+                    rotatedX = rawX * Math.cos(rotAngle) - rawY * Math.sin(rotAngle);
+                    rotatedY = rawX * Math.sin(rotAngle) + rawY * Math.cos(rotAngle);
+
+                    this.lissajousFigure.push([rotatedX, rotatedY]);
+
+                    // Update angles and apply damping
+                    for (var i = 0; i < 4; i++) {
+                        angle[i] += this.parameters.stepSizes[i];
+                        max[i] *= this.parameters.friction[i];
                     }
-
-                    // Push the new point on array
-                    this.lissajousFigure.push(point.slice());
-
-                    // Increase angles with stepsizes					
-                    for (dim = 0; dim <= this.parameters.dimensions; dim++) {
-                        angle[dim] += this.parameters.stepSizes[dim];
-                    }
-
-                    //Apply friction with factor < 0 to Amplitudes   
-                    for (dim = 0; dim <= this.parameters.dimensions; dim++) {
-                        max[dim] = max[dim] * this.parameters.friction[dim];
-                    }
+                    rotTimer += this.parameters.rotationStepSize;
                 }
-                // console.log(this.lissajousFigure.length);
             }
         };
 
