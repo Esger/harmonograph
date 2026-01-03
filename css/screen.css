@@ -123,6 +123,7 @@ footer input {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    gap: 10px;
 }
 
 .hint>* {
@@ -143,6 +144,12 @@ footer input {
 
 .setting>* {
     margin-left: 1vw;
+}
+
+.setting output {
+    width: 30px;
+    text-align: left;
+    display: inline-block;
 }
 
 .wizzard {

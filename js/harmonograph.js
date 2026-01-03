@@ -89,21 +89,25 @@ $(function () {
                 });
 
                 $dimensions.on('change', function () {
+                    $(this).next('output').val(this.value);
                     harmonographModel.setDimensions(this.value);
                     harmonographController.redraw();
                 });
 
                 $thickness.on('input change', function () {
+                    $(this).next('output').val(this.value);
                     harmonographModel.setThickness(this.value);
                     harmonographController.redraw();
                 });
 
                 $rotation.on('input change', function () {
+                    $(this).next('output').val(this.value);
                     harmonographModel.setRotation(this.value);
                     harmonographController.redraw();
                 });
 
                 $damping.on('input change', function () {
+                    $(this).next('output').val(this.value);
                     harmonographModel.setDamping(this.value);
                     harmonographController.redraw();
                 });
