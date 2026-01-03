@@ -12,7 +12,6 @@ class Harmonograph {
 
         this.shiftPressed = false;
         this.points = [];
-        this.isControlsCollapsed = false;
 
         // Start initial render
         this.updateCurrentYear();
@@ -40,7 +39,6 @@ class Harmonograph {
 
     initDOM() {
         this.controlsPanel = id('controls');
-        this.toggleBtn = id('toggleControls');
         this.downloadBtn = id('downloadBtn');
         this.resetBtn = id('resetBtn');
         this.tooltip = id('tooltip');
@@ -95,11 +93,6 @@ class Harmonograph {
         });
 
         // UI Controls
-        this.toggleBtn.addEventListener('click', () => {
-            this.isControlsCollapsed = !this.isControlsCollapsed;
-            this.controlsPanel.classList.toggle('collapsed', this.isControlsCollapsed);
-        });
-
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.resetBtn.addEventListener('click', () => this.reset());
     }

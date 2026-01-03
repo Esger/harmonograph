@@ -25,10 +25,14 @@
              class="app-container">
             <header class="main-header">
                 <h1 class="logo">Harmonograph</h1>
-                <div class="controls-toggle">
-                    <button id="toggleControls" aria-label="Toggle Controls">
-                    <span class="icon">Settings</span>
-                </button>
+                <div class="controls-trigger">
+                    <button id="toggleControls" popovertarget="controls" aria-label="Open Settings">
+                        <span class="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </button>
                 </div>
             </header>
 
@@ -42,7 +46,14 @@
             </main>
 
             <aside id="controls"
-                   class="controls-panel">
+                   class="controls-panel"
+                   popover>
+                <button class="close-btn" popovertarget="controls" aria-label="Close Settings">
+                    <span class="close-icon">
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <section class="control-group">
                     <h3>Pendulums</h3>
                     <div class="input-wrapper">
