@@ -120,10 +120,13 @@ footer input {
 
 .hint {
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 .hint>* {
-    margin: 10px 0;
+    margin: 20px 0 0;
 }
 
 .settings {
