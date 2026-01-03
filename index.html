@@ -1,89 +1,93 @@
 <!DOCTYPE html>
 <html xmlns="https://www.w3.org/1999/xhtml">
 
-<head>
-    <meta http-equiv="Content-Type"
-          content="text/html; charset=UTF-8" />
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Harmonograph &vellip; create Lissajous figures</title>
-    <script type="text/javascript"
-            src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
-    <link rel="stylesheet"
-          href="css/reset.css" />
-    <link rel="stylesheet"
-          href="css/screen.css" />
-    <script type="text/javascript">
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-2700808-7']);
-        _gaq.push(['_trackPageview']);
+    <head>
+        <meta http-equiv="Content-Type"
+              content="text/html; charset=UTF-8" />
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <title>Harmonograph &vellip; create Lissajous figures</title>
+        <script type="text/javascript"
+                src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+        <link rel="stylesheet"
+              href="css/reset.css" />
+        <link rel="stylesheet"
+              href="css/screen.css" />
+        <script type="text/javascript">
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-2700808-7']);
+            _gaq.push(['_trackPageview']);
 
-        (function () {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
+            (function () {
+                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })();
 
-    </script>
-</head>
+        </script>
+    </head>
 
-<body>
-    <div id="container"
-         class="container">
+    <body>
+        <div id="container"
+             class="container">
 
-        <header class="">
-            <div class="addThis">
-            </div>
-            <h1 class="">Harmonograph</h1>
-
-            <section class="wizzard ">
-                <p>Move your mouse or finger over the canvas slowly.</br>
-                    And watch the magic happen.</p>
-                <p>Click somewhere on the canvas.</br>
-                    This changes the third and or fourth dimensions.</p>
-                <p>Change the number of dimensions with the slider.</br>
-                    Have fun!</p>
-                <p>Press shift to show and constrain to harmonics guides.</p>
-                <p>Thanks for sharing.</p>
-            </section>
-        </header>
-
-        <canvas id="myCanvas"
-                class="myCanvas"
-                class="">
-            Please install a modern browser, <a href="http://browsehappy.com/".>Browse happy</a>
-        </canvas>
-
-        <footer class="">
-            <section class="hint">
-                <h2>Create Lissajous figures interactively</h2>
-                <p>Follow the tips and watch the magic happen.</p>
-                <p><a href="snapshot.php" class="r createSnapshot">Make a snapshot to share&hellip;</a></p>
-            </section>
-            <section class="settings">
-                <div class="setting">
-                    <input type="range" min="1" max="3" value="2" id="dimensions" class="">
-                    <label for=dimensions class="">Dimensions <span class='ieOnly'>&hellip; enter a value from 1 to 3</span></label>
+            <header class="">
+                <div class="addThis">
                 </div>
-                <p class=""><a href="https://www.ashware.nl">&copy; ashWare</a></p>
-            </section>
-        </footer>
+                <h1 class="">Harmonograph</h1>
 
-    </div>
+                <section class="wizzard ">
+                    <p>Move your mouse or finger over the canvas slowly.</br>
+                        And watch the magic happen.</p>
+                    <p>Click somewhere on the canvas.</br>
+                        This changes the third and or fourth dimensions.</p>
+                    <p>Change the number of dimensions with the slider.</br>
+                        Have fun!</p>
+                    <p>Press shift to show and constrain to harmonics guides.</p>
+                    <p>Thanks for sharing.</p>
+                </section>
+            </header>
 
-    <script type="text/javascript"
-            src="js/shortcuts.min.js"></script>
-    <script type="text/javascript"
-            src="js/harmonograph.js"></script>
+            <canvas id="myCanvas"
+                    class="myCanvas"
+                    class="">
+                Please install a modern browser, <a href="http://browsehappy.com/".>Browse happy</a>
+            </canvas>
 
-    <!-- AddThis Button BEGIN -->
-    <div class="addthis_toolbox addthis_default_style ">
-        <a class="addthis_counter addthis_pill_style"></a>
-    </div>
-    <script type="text/javascript"
-            src="https://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4f3c4b976815089f"></script>
-    <!-- AddThis Button END -->
+            <footer class="">
+                <section class="hint">
+                    <h2>Create Lissajous figures interactively</h2>
+                    <p>Follow the tips and watch the magic happen.</p>
+                    <p><a href="snapshot.php" class="r createSnapshot">Make a snapshot to share&hellip;</a></p>
+                </section>
+                <section class="settings">
+                    <div class="setting">
+                        <label for="dimensions" class="">Dimensions</label>
+                        <input type="range" min="1" max="3" value="2" id="dimensions" class="">
+                    </div>
+                    <div class="setting">
+                        <label for="thickness" class="">Thickness</label>
+                        <input type="range" min="0.5" max="5" step="0.25" value="1" id="thickness" class="">
+                    </div>
+                    <p class=""><a href="https://www.ashware.nl">&copy; ashWare</a></p>
+                </section>
+            </footer>
 
-</body>
+        </div>
+
+        <script type="text/javascript"
+                src="js/shortcuts.min.js"></script>
+        <script type="text/javascript"
+                src="js/harmonograph.js"></script>
+
+        <!-- AddThis Button BEGIN -->
+        <div class="addthis_toolbox addthis_default_style ">
+            <a class="addthis_counter addthis_pill_style"></a>
+        </div>
+        <script type="text/javascript"
+                src="https://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4f3c4b976815089f"></script>
+        <!-- AddThis Button END -->
+
+    </body>
 
 </html>

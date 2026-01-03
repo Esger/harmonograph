@@ -18,6 +18,7 @@ $(function () {
                 var gogogo = null,
                     $snapShotButton = $('.createSnapshot'),
                     $dimensions = $('#dimensions'),
+                    $thickness = $('#thickness'),
                     $canvas = $('#myCanvas'),
                     $elem = $canvas[0];
 
@@ -87,6 +88,11 @@ $(function () {
 
                 $dimensions.on('change', function () {
                     harmonographModel.setDimensions(this.value);
+                });
+
+                $thickness.on('input change', function () {
+                    harmonographModel.setThickness(this.value);
+                    harmonographController.redraw();
                 });
 
                 $(document).on('keydown', function (e) {
@@ -159,7 +165,7 @@ $(function () {
                         canvasEl.style.width = $body.width() + 'px';
                         canvasEl.style.height = $body.height() + 'px';
                         ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-                        ctx.lineWidth = 2;
+                        ctx.lineWidth = harmonographModel.parameters.thickness;
 
                         // draw grid
                         if (grid) {
@@ -259,7 +265,8 @@ $(function () {
                 dimensions: 2,
                 amplitudes: [250, 250, 100, 0],
                 stepSizes: [Math.PI / 45, Math.PI / 45, Math.PI / 45, Math.PI / 45],
-                friction: [0.9992, 0.9992, 0.9996, 0.9996]
+                friction: [0.9992, 0.9992, 0.9996, 0.9996],
+                thickness: 2
             },
 
             lissajousFigure: [],
@@ -284,6 +291,10 @@ $(function () {
 
             setDimensions: function (val) {
                 this.parameters.dimensions = val;
+            },
+
+            setThickness: function (val) {
+                this.parameters.thickness = val;
             },
 
             generateLissajous: function () {
