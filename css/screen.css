@@ -457,6 +457,12 @@ input[type="color"]::-webkit-color-swatch {
     }
 }
 
+/* Hide menu, title, and hint when loaded in iframe */
+body.isIframed .main-header,
+body.isIframed .tooltip {
+    display: none;
+}
+
 /* Squircle corners for browsers that support it */
 @supports (corner-shape: squircle) or (-webkit-corner-shape: squircle) {
 
