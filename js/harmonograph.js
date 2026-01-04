@@ -274,8 +274,8 @@ class Harmonograph {
 
     downloadImage() {
         const link = document.createElement('a');
-        link.download = `harmonograph-${Date.now()}.png`;
-        link.href = this.canvas.toDataURL('image/png');
+        link.download = `harmonograph-${Date.now()}.webp`;
+        link.href = this.canvas.toDataURL('image/webp');
         link.click();
     }
 
