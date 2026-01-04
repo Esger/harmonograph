@@ -167,36 +167,48 @@ class Harmonograph {
 
     handleInteraction(e, isClick = false) {
         const rect = this.canvas.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
+        const width = rect.width;
+        const height = rect.height;
+
+        // Normalized coordinates (0 to 1)
+        let nx = (e.clientX - rect.left) / width;
+        let ny = (e.clientY - rect.top) / height;
+
+        // Clamp to avoid division by zero and extreme values
+        nx = Math.max(0.001, Math.min(0.999, nx));
+        ny = Math.max(0.001, Math.min(0.999, ny));
 
         if (this.shiftPressed) {
             const harmonics = [0.25, 0.5, 0.75, 1, 1.33, 2, 4];
-            const ratio = x / (y || 1);
+            const ratio = nx / ny;
             const closest = harmonics.reduce((prev, curr) =>
                 Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev
             );
-            y = x / closest;
+            ny = nx / closest;
         }
+
+        // Virtual coordinates for agnostic parameter mapping (0 to 1000)
+        const vx = nx * 1000;
+        const vy = ny * 1000;
 
         if (isClick) {
             // Set Table Params (Pendulums 3 & 4)
-            this.params.amplitudes[2] = Math.sqrt(x) * 15;
-            this.params.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(y) * 15 : 0;
-            this.params.stepSizes[2] = Math.sqrt(y) / (x || 1);
-            this.params.stepSizes[3] = Math.sqrt(x) / (y || 1);
+            this.params.amplitudes[2] = Math.sqrt(vx) * 15;
+            this.params.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(vy) * 15 : 0;
+            this.params.stepSizes[2] = Math.sqrt(vy) / (vx || 1);
+            this.params.stepSizes[3] = Math.sqrt(vx) / (vy || 1);
         } else {
             // Set Pen Params (Pendulums 1 & 2)
-            this.params.amplitudes[0] = Math.sqrt(x) * 15;
-            this.params.amplitudes[1] = Math.sqrt(y) * 15;
+            this.params.amplitudes[0] = Math.sqrt(vx) * 15;
+            this.params.amplitudes[1] = Math.sqrt(vy) * 15;
 
             if (this.inputs.natural.checked) {
-                // Natural mode: frequencies stay very close (approx 1:1) to allow for precessing ellipses
-                const rawFreq0 = Math.sqrt(y) / (x || 1);
-                const rawFreq1 = Math.sqrt(x) / (y || 1);
+                // Natural mode: frequencies stay very close (approx 1:1)
+                const rawFreq0 = Math.sqrt(vy) / (vx || 1);
+                const rawFreq1 = Math.sqrt(vx) / (vy || 1);
                 const avgFreq = (rawFreq0 + rawFreq1) / 2;
 
-                // Allow a tiny difference (0.5%) for that "natural" slow rotation/evolution
+                // Allow a tiny difference (5%) for slow evolution
                 const diff = (rawFreq1 - rawFreq0) * 0.05;
 
                 this.params.stepSizes[0] = avgFreq - diff;
@@ -205,8 +217,8 @@ class Harmonograph {
                 // Ensure phase offset for elliptical movement
                 this.params.phases[1] = Math.PI / 2;
             } else {
-                this.params.stepSizes[0] = Math.sqrt(y) / (x || 1);
-                this.params.stepSizes[1] = Math.sqrt(x) / (y || 1);
+                this.params.stepSizes[0] = Math.sqrt(vy) / (vx || 1);
+                this.params.stepSizes[1] = Math.sqrt(vx) / (vy || 1);
             }
         }
 
@@ -254,15 +266,20 @@ class Harmonograph {
         this.generatePoints();
 
         const dpr = window.devicePixelRatio || 1;
-        const centerX = this.canvas.width / (2 * dpr);
-        const centerY = this.canvas.height / (2 * dpr);
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Scale to fit the smallest screen dimension (agnostic unit system)
+        const scale = Math.min(width, height) / 1000;
 
         this.ctx.fillStyle = '#0a0a0c';
-        this.ctx.fillRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+        this.ctx.fillRect(0, 0, width, height);
 
         if (this.points.length < 2) return;
 
-        this.ctx.lineWidth = this.params.thickness;
+        this.ctx.lineWidth = this.params.thickness * scale * 2; // Scale thickness with view
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
@@ -271,7 +288,7 @@ class Harmonograph {
         const customColor = this.inputs.lineColor.value;
 
         this.ctx.beginPath();
-        this.ctx.moveTo(this.points[0][0] + centerX, this.points[0][1] + centerY);
+        this.ctx.moveTo(this.points[0][0] * scale + centerX, this.points[0][1] * scale + centerY);
 
         for (let i = 1; i < this.points.length; i++) {
             if (useCustom) {
@@ -283,12 +300,12 @@ class Harmonograph {
                 this.ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
             }
 
-            this.ctx.lineTo(this.points[i][0] + centerX, this.points[i][1] + centerY);
+            this.ctx.lineTo(this.points[i][0] * scale + centerX, this.points[i][1] * scale + centerY);
 
             if (i % 20 === 0) {
                 this.ctx.stroke();
                 this.ctx.beginPath();
-                this.ctx.moveTo(this.points[i][0] + centerX, this.points[i][1] + centerY);
+                this.ctx.moveTo(this.points[i][0] * scale + centerX, this.points[i][1] * scale + centerY);
             }
         }
         this.ctx.stroke();
