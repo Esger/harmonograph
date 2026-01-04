@@ -1,387 +1,367 @@
-// JavaScript Document
-$(function () {
-    "use strict";
+/**
+ * Harmonograph Simulator
+ * Modernized ES6 Implementation
+ */
 
-    (function () {
-        /* Make the mod function work properly so negative numbers return a correct positive value
-        http://javascript.about.com/od/problemsolving/a/modulobug.htm */
-        Number.prototype.mod = function (n) {
-            return ((this % n) + n) % n;
+class Harmonograph {
+    constructor() {
+        this.initCanvas();
+        this.initDOM();
+        this.initParams();
+        this.addEventListeners();
+
+        this.shiftPressed = false;
+        this.points = [];
+
+        // Start initial render
+        this.updateCurrentYear();
+        this.resize();
+        this.render();
+    }
+
+    initCanvas() {
+        this.canvas = document.getElementById('harmonographCanvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+    }
+
+    initParams() {
+        this.params = {
+            dimensions: parseInt(this.inputs.dimensions.value),
+            amplitudes: [250, 250, 250, 250],
+            stepSizes: [Math.PI / 45, Math.PI / 45.1, Math.PI / 45.2, Math.PI / 45.3],
+            phases: [0, Math.PI / 2, Math.PI / 4, Math.PI / 3],
+            friction: [0.9992, 0.9992, 0.9992, 0.9992],
+            thickness: parseFloat(this.inputs.thickness.value),
+            rotationAmplitude: parseFloat(this.inputs.rotation.value) * Math.PI * 2,
+            rotationStepSize: Math.PI / 100
+        };
+        this.setDamping(this.inputs.damping.value);
+    }
+
+    initDOM() {
+        this.controlsPanel = id('controls');
+        this.downloadBtn = id('downloadBtn');
+        this.resetBtn = id('resetBtn');
+        this.tooltip = id('tooltip');
+
+        this.inputs = {
+            dimensions: id('dimensions'),
+            rotation: id('rotation'),
+            damping: id('damping'),
+            thickness: id('thickness'),
+            natural: id('naturalMode'),
+            customColor: id('customColor'),
+            lineColor: id('lineColor')
         };
 
-        var harmonographController = {
+        this.colorPickerContainer = id('colorPickerContainer');
 
-            shiftPressed: false,
+        // Capture initial values from HTML
+        this.initialValues = {
+            dimensions: this.inputs.dimensions.value,
+            rotation: this.inputs.rotation.value,
+            damping: this.inputs.damping.value,
+            thickness: this.inputs.thickness.value,
+            natural: this.inputs.natural.checked,
+            customColor: this.inputs.customColor.checked,
+            lineColor: this.inputs.lineColor.value
+        };
 
-            addListeners: function () {
+        this.displays = {
+            dimensions: id('dimensionsValue'),
+            rotation: id('rotationValue'),
+            damping: id('dampingValue'),
+            thickness: id('thicknessValue'),
+            color: id('colorValue')
+        };
 
-                var gogogo = null,
-                    $snapShotButton = $('.createSnapshot'),
-                    $dimensions = $('#dimensions'),
-                    $thickness = $('#thickness'),
-                    $rotation = $('#rotation'),
-                    $damping = $('#damping'),
-                    $canvas = $('#myCanvas'),
-                    $elem = $canvas[0];
+        // Initialize color picker UI state
+        const isCustom = this.inputs.customColor.checked;
+        this.colorPickerContainer.classList.toggle('rainbow-mode', !isCustom);
+        this.displays.color.textContent = isCustom ? this.inputs.lineColor.value.toUpperCase() : 'RAINBOW';
+    }
 
-                $canvas.on('mouseover', function () {
-                    harmonographController.nextTip(2);
-                });
+    addEventListeners() {
+        window.addEventListener('resize', () => this.resize());
 
-                $canvas.on('mouseout', function () {
-                    harmonographController.nextTip(4);
-                });
+        // Parameter Sliders
+        this.inputs.dimensions.addEventListener('input', (e) => this.handleParamChange('dimensions', e.target.value));
+        this.inputs.rotation.addEventListener('input', (e) => this.handleParamChange('rotation', e.target.value));
+        this.inputs.damping.addEventListener('input', (e) => this.handleParamChange('damping', e.target.value));
+        this.inputs.thickness.addEventListener('input', (e) => this.handleParamChange('thickness', e.target.value));
 
-                $canvas.on('touchend', function () {
-                    harmonographController.nextTip(4);
-                });
+        // Interaction
+        this.canvas.addEventListener('mousemove', (e) => this.handleInteraction(e));
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            this.handleInteraction(e.touches[0]);
+        }, { passive: false });
 
-                $canvas.on('mousemove', function (evt) {
-                    var eventPos = harmonographInterface.getEventPos(evt, harmonographController.shiftPressed);
-                    harmonographModel.setPenParams(eventPos);
-                    requestAnimationFrame(harmonographController.redraw);
-                });
+        this.canvas.addEventListener('mousedown', (e) => this.handleInteraction(e, true));
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.handleInteraction(e.touches[0], true);
+        }, { passive: false });
 
-                $canvas.on('click', function (evt) {
-                    var eventPos = harmonographInterface.getEventPos(evt, harmonographController.shiftPressed);
-                    harmonographModel.setTableParams(eventPos);
-                    harmonographController.nextTip(3);
-                });
+        // Tooltip visibility
+        this.canvas.addEventListener('mouseenter', () => this.tooltip.classList.add('visible'));
+        this.canvas.addEventListener('mouseleave', () => this.tooltip.classList.remove('visible'));
 
-                $canvas.on('touchstart', function (evt) {
-                    evt.preventDefault();
+        // Keyboard
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Shift') this.shiftPressed = true;
+            if (e.key.toLowerCase() === 'd') this.downloadImage();
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift') this.shiftPressed = false;
+        });
 
-                    var eventPos,
-                        touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
+        // UI Controls
+        this.inputs.natural.addEventListener('change', () => this.render());
 
-                    eventPos = harmonographInterface.getEventPos(touch);
-                    harmonographModel.setTableParams(eventPos);
+        this.inputs.customColor.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            this.colorPickerContainer.classList.toggle('rainbow-mode', !enabled);
+            this.displays.color.textContent = enabled ? this.inputs.lineColor.value.toUpperCase() : 'RAINBOW';
+            this.render();
+        });
 
-                    harmonographController.nextTip(2);
-                });
+        this.inputs.lineColor.addEventListener('input', (e) => {
+            this.displays.color.textContent = e.target.value.toUpperCase();
+            this.render();
+        });
 
-                $canvas.on('touchmove', function (evt) {
-                    var eventPos;
-                    var touch = (evt.originalEvent.touches[0] || evt.changedTouches[0]);
-                    eventPos = harmonographInterface.getEventPos(touch);
-                    harmonographModel.setPenParams(eventPos);
-                    requestAnimationFrame(harmonographController.redraw);
-                });
+        this.downloadBtn.addEventListener('click', () => this.downloadImage());
+        this.resetBtn.addEventListener('click', () => this.reset());
+    }
 
-                $snapShotButton.on('touchstart', function (e) {
-                    e.preventDefault(); // don't follow the link before the image is saved
-                    var anchor = $(this), h,
-                        newHref;
-                    h = anchor.attr('href');
-                    harmonographInterface.saveHarmonogram(harmonographInterface.newimageId());
-                    newHref = h + '?imageId=' + harmonographInterface.imageId;
-                    window.location = newHref;
-                });
+    handleParamChange(key, value) {
+        const val = parseFloat(value);
+        this.displays[key].textContent = val.toFixed(key === 'dimensions' || key === 'damping' ? 0 : 2);
 
-                $snapShotButton.on('click', function (e) {
-                    e.preventDefault(); // don't follow the link before the image is saved
-                    var anchor = $(this), h,
-                        newHref;
-                    h = anchor.attr('href');
-                    harmonographInterface.saveHarmonogram(harmonographInterface.newimageId());
-                    newHref = h + '?imageId=' + harmonographInterface.imageId;
-                    window.open(newHref);
-                });
+        switch (key) {
+            case 'dimensions':
+                this.params.dimensions = parseInt(val);
+                break;
+            case 'rotation':
+                this.params.rotationAmplitude = val * Math.PI * 2;
+                break;
+            case 'damping':
+                this.setDamping(val);
+                break;
+            case 'thickness':
+                this.params.thickness = val;
+                break;
+        }
+        this.render();
+    }
 
-                $dimensions.on('change', function () {
-                    $(this).next('output').val(this.value);
-                    harmonographModel.setDimensions(this.value);
-                    harmonographController.redraw();
-                });
+    setDamping(percentage) {
+        // Map 0% -> 0.9999 (least damping/long life)
+        // Map 100% -> 0.9990 (most damping/short life)
+        const d = 0.9999 - (percentage / 100) * 0.0009;
+        for (let i = 0; i < 4; i++) {
+            this.params.friction[i] = d;
+        }
+    }
 
-                $thickness.on('input change', function () {
-                    $(this).next('output').val(this.value);
-                    harmonographModel.setThickness(this.value);
-                    harmonographController.redraw();
-                });
+    handleInteraction(e, isClick = false) {
+        const rect = this.canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
 
-                $rotation.on('input change', function () {
-                    $(this).next('output').val(this.value);
-                    harmonographModel.setRotation(this.value);
-                    harmonographController.redraw();
-                });
+        // Normalized coordinates (0 to 1)
+        let nx = (e.clientX - rect.left) / width;
+        let ny = (e.clientY - rect.top) / height;
 
-                $damping.on('input change', function () {
-                    $(this).next('output').val(this.value);
-                    harmonographModel.setDamping(this.value);
-                    harmonographController.redraw();
-                });
+        // Clamp to avoid division by zero and extreme values
+        nx = Math.max(0.001, Math.min(0.999, nx));
+        ny = Math.max(0.001, Math.min(0.999, ny));
 
-                $(document).on('keydown', function (e) {
-                    if (e.keyCode == 16) {
-                        harmonographController.shiftPressed = true;
-                        harmonographController.redraw();
-                    }
-                }).on('keyup', function (e) {
-                    if (e.keyCode == 16) {
-                        harmonographController.shiftPressed = false;
-                        harmonographController.redraw();
-                    }
-                });
+        if (this.shiftPressed) {
+            const harmonics = [0.25, 0.5, 0.75, 1, 1.33, 2, 4];
+            const ratio = nx / ny;
+            const closest = harmonics.reduce((prev, curr) =>
+                Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev
+            );
+            ny = nx / closest;
+        }
 
-            },
+        // Virtual coordinates for agnostic parameter mapping (0 to 1000)
+        const vx = nx * 1000;
+        const vy = ny * 1000;
 
-            redraw: function () {
-                harmonographModel.generateLissajous();
-                harmonographInterface.drawLissajous(harmonographModel.lissajousFigure, harmonographController.shiftPressed);
-            },
+        if (isClick) {
+            // Set Table Params (Pendulums 3 & 4)
+            this.params.amplitudes[2] = Math.sqrt(vx) * 15;
+            this.params.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(vy) * 15 : 0;
+            this.params.stepSizes[2] = Math.sqrt(vy) / (vx || 1);
+            this.params.stepSizes[3] = Math.sqrt(vx) / (vy || 1);
+        } else {
+            // Set Pen Params (Pendulums 1 & 2)
+            this.params.amplitudes[0] = Math.sqrt(vx) * 15;
+            this.params.amplitudes[1] = Math.sqrt(vy) * 15;
 
-            nextTip: function (tipNumber) {
-                setTimeout(function () { harmonographInterface.showNextTip(tipNumber); }, 7000);
-            },
+            if (this.inputs.natural.checked) {
+                // Natural mode: frequencies stay very close (approx 1:1)
+                const rawFreq0 = Math.sqrt(vy) / (vx || 1);
+                const rawFreq1 = Math.sqrt(vx) / (vy || 1);
+                const avgFreq = (rawFreq0 + rawFreq1) / 2;
 
-            init: function () {
-                harmonographInterface.detectEnvironment();
-                this.addListeners();
-                this.redraw();
-                harmonographInterface.addSharingShortCut();
-                this.nextTip(1);
+                // Allow a tiny difference (5%) for slow evolution
+                const diff = (rawFreq1 - rawFreq0) * 0.05;
+
+                this.params.stepSizes[0] = avgFreq - diff;
+                this.params.stepSizes[1] = avgFreq + diff;
+
+                // Ensure phase offset for elliptical movement
+                this.params.phases[1] = Math.PI / 2;
+            } else {
+                this.params.stepSizes[0] = Math.sqrt(vy) / (vx || 1);
+                this.params.stepSizes[1] = Math.sqrt(vx) / (vy || 1);
+            }
+        }
+
+        this.render();
+    }
+
+    generatePoints() {
+        const { dimensions, amplitudes, stepSizes, phases, friction, rotationAmplitude, rotationStepSize } = this.params;
+        const currentAmps = [...amplitudes];
+        const angles = [0, 0, 0, 0];
+        let rotTimer = 0;
+
+        this.points = [];
+        const limit = 2;
+        let count = 0;
+
+        while ((currentAmps[0] > limit || currentAmps[1] > limit || currentAmps[2] > limit || currentAmps[3] > limit) && count < 8000) {
+            const dampingRatio = currentAmps[0] / (amplitudes[0] || 1);
+
+            let rawX = 0;
+            let rawY = 0;
+
+            if (dimensions >= 1) rawX += Math.sin(angles[0] + phases[0]) * currentAmps[0];
+            if (dimensions >= 2) rawY += Math.cos(angles[1] + phases[1]) * currentAmps[1];
+            if (dimensions >= 3) rawX += Math.sin(angles[2] + phases[2]) * currentAmps[2];
+            if (dimensions >= 4) rawY += Math.cos(angles[3] + phases[3]) * currentAmps[3];
+
+            const rotAngle = rotationAmplitude * Math.sin(rotTimer) * dampingRatio;
+
+            const rotatedX = rawX * Math.cos(rotAngle) - rawY * Math.sin(rotAngle);
+            const rotatedY = rawX * Math.sin(rotAngle) + rawY * Math.cos(rotAngle);
+
+            this.points.push([rotatedX, rotatedY]);
+
+            for (let i = 0; i < 4; i++) {
+                angles[i] += stepSizes[i];
+                currentAmps[i] *= friction[i];
+            }
+            rotTimer += rotationStepSize;
+            count++;
+        }
+    }
+
+    render() {
+        this.generatePoints();
+
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Scale to fit the smallest screen dimension (agnostic unit system)
+        const scale = Math.min(width, height) / 1000;
+
+        this.ctx.fillStyle = '#0a0a0c';
+        this.ctx.fillRect(0, 0, width, height);
+
+        if (this.points.length < 2) return;
+
+        this.ctx.lineWidth = this.params.thickness * scale * 2; // Scale thickness with view
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        const f = 0.002;
+        const useCustom = this.inputs.customColor.checked;
+        const customColor = this.inputs.lineColor.value;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.points[0][0] * scale + centerX, this.points[0][1] * scale + centerY);
+
+        for (let i = 1; i < this.points.length; i++) {
+            if (useCustom) {
+                this.ctx.strokeStyle = customColor;
+            } else {
+                const blue = Math.sin(f * i + 0) * 127 + 128;
+                const red = Math.sin(f * i + 2) * 127 + 128;
+                const green = Math.sin(f * i + 4) * 127 + 128;
+                this.ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
             }
 
-        };
+            this.ctx.lineTo(this.points[i][0] * scale + centerX, this.points[i][1] * scale + centerY);
 
-        var harmonographInterface = {
-
-            // Check if it is a touch device
-            detectEnvironment: function () {
-                if ('ontouchstart' in document.documentElement) {
-                    $('body').addClass('touchDevice');
-                }
-                if (window.parent !== window) {
-                    // document is being loaded in an iframe
-                    $('body').addClass('isIframed');
-                }
-            },
-
-            // Draw the figure
-            drawLissajous: function (points, grid = false) {
-                var $canvas = $('#myCanvas'),
-                    canvasEl = $canvas[0],
-                    $body = $('body'),
-                    centerX = Math.round(canvasEl.width / 2),
-                    centerY = Math.round(canvasEl.height / 2);
-
-                if (points.length > 2) {
-                    if (canvasEl.getContext) {
-                        var ctx = canvasEl.getContext('2d'),
-                            x = points[1][0] + centerX,
-                            y = points[1][1] + centerY,
-                            newX, newY,
-                            f = 0.002, blue, red, green,
-                            lines = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4],
-                            largestSide = Math.max(canvasEl.width, canvasEl.height);
-
-                        // With special thanks to Asad at Stackoverflow for helping out with the rainbow path.
-                        canvasEl.width = $body.width();
-                        canvasEl.height = $body.height();
-                        canvasEl.style.width = $body.width() + 'px';
-                        canvasEl.style.height = $body.height() + 'px';
-                        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-                        ctx.lineWidth = harmonographModel.parameters.thickness;
-
-                        // draw grid
-                        if (grid) {
-                            for (var a = 0; a < lines.length; a++) {
-                                ctx.beginPath();
-                                ctx.moveTo(0, 0);
-                                newX = largestSide;
-                                newY = lines[a] * largestSide;
-                                ctx.strokeStyle = 'rgba(245,245,245,0.1)'; // whitesmoke
-                                ctx.lineTo(newX, newY);
-                                ctx.stroke();
-                                ctx.closePath();
-                            }
-                        }
-
-                        // draw lissajous
-                        for (var count = 2; count < points.length; count++) {
-                            ctx.beginPath();
-                            ctx.moveTo(x, y);
-                            newX = points[count][0] + centerX;
-                            newY = points[count][1] + centerY;
-                            blue = Math.sin(f * count + 0) * 127 + 128;
-                            red = Math.sin(f * count + 2) * 127 + 128;
-                            green = Math.sin(f * count + 4) * 127 + 128;
-                            ctx.strokeStyle = 'rgb(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ')';
-                            x = newX;
-                            y = newY;
-                            ctx.lineTo(x, y);
-                            ctx.stroke();
-                            ctx.closePath();
-                        }
-                    } else {
-                        console.error('canvas not supported');
-                    }
-                }
-            },
-
-            getEventPos: function (evt, constrain = false) {
-                var x = evt.clientX,
-                    y = evt.clientY,
-                    ratio, closestRatio,
-                    harmonics = [1 / 4, 1 / 2, 3 / 4, 1, 4 / 3, 2, 4];
-
-                if (y > 0) {
-                    ratio = x / y;
-                }
-                if (constrain) {
-                    closestRatio = harmonics.reduce(function (prev, curr) {
-                        return (Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev);
-                    });
-                    y = x / closestRatio;
-                }
-                console.info(constrain, x, y);
-                return {
-                    x: x,
-                    y: y
-                };
-            },
-
-            imageId: 0,
-            newimageId: function () {
-                this.imageId = Math.floor((Math.random() * 100000) % 100000 + '');
-                return this.imageId;
-            },
-            newHref: null,
-
-            // Save the canvasdata as image with random number in name.
-            saveHarmonogram: function () {
-                var $canvas = $('#myCanvas')[0],
-                    canvasData = $canvas.toDataURL("image/png"),
-                    ajax = new XMLHttpRequest();
-
-                this.newimageId();
-                this.newHref = 'snapshot.php' + '?imageId=' + this.imageId;
-                ajax.open("POST", this.newHref, false);
-                ajax.setRequestHeader('Content-Type', 'application/upload');
-                ajax.send(canvasData);
-                //window.open('your-harmonogram.php?imageId='+ imgId);
-            },
-
-            addSharingShortCut: function () {
-                shortcut.add('Space', function () {
-                    harmonographInterface.saveHarmonogram();
-                    window.location = harmonographInterface.newHref;
-                });
-            },
-
-            showNextTip: function (tipNumber) {
-                $('.wizzard p').removeClass('active');
-                $('.wizzard p:nth-child(' + tipNumber + ')').addClass('active');
+            if (i % 20 === 0) {
+                this.ctx.stroke();
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.points[i][0] * scale + centerX, this.points[i][1] * scale + centerY);
             }
-        };
+        }
+        this.ctx.stroke();
+    }
 
-        var harmonographModel = {
+    resize() {
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.ctx.scale(dpr, dpr);
+        this.render();
+    }
 
-            parameters: {
-                dimensions: 2,
-                amplitudes: [250, 250, 250, 250],
-                stepSizes: [Math.PI / 45, Math.PI / 45.1, Math.PI / 45.2, Math.PI / 45.3],
-                phases: [0, Math.PI / 2, Math.PI / 4, Math.PI / 3],
-                friction: [0.9992, 0.9992, 0.9992, 0.9992],
-                thickness: 1,
-                rotationAmplitude: 3.14,
-                rotationStepSize: Math.PI / 100
-            },
+    downloadImage() {
+        const link = document.createElement('a');
+        link.download = `harmonograph-${Date.now()}.webp`;
+        link.href = this.canvas.toDataURL('image/webp');
+        link.click();
+    }
 
-            lissajousFigure: [],
+    reset() {
+        // Restore values to inputs
+        this.inputs.dimensions.value = this.initialValues.dimensions;
+        this.inputs.rotation.value = this.initialValues.rotation;
+        this.inputs.damping.value = this.initialValues.damping;
+        this.inputs.thickness.value = this.initialValues.thickness;
+        this.inputs.natural.checked = this.initialValues.natural;
+        this.inputs.customColor.checked = this.initialValues.customColor;
+        this.inputs.lineColor.value = this.initialValues.lineColor;
 
-            setPenParams: function (ePos) {
-                this.parameters.amplitudes[0] = Math.sqrt(ePos.x) * 15;
-                this.parameters.amplitudes[1] = Math.sqrt(ePos.y) * 15;
-                this.parameters.stepSizes[0] = Math.sqrt(ePos.y) / ePos.x;
-                this.parameters.stepSizes[1] = Math.sqrt(ePos.x) / ePos.y;
-            },
+        // Reset color container state
+        this.colorPickerContainer.classList.toggle('rainbow-mode', !this.initialValues.customColor);
+        this.displays.color.textContent = this.initialValues.customColor ?
+            this.initialValues.lineColor.toUpperCase() : 'RAINBOW';
 
-            setTableParams: function (ePos) {
-                this.parameters.amplitudes[2] = Math.sqrt(ePos.x) * 15;
-                if (this.parameters.dimensions < 3) {
-                    this.parameters.amplitudes[3] = 0;
-                } else {
-                    this.parameters.amplitudes[3] = Math.sqrt(ePos.y) * 15;
-                }
-                this.parameters.stepSizes[2] = Math.sqrt(ePos.y) / ePos.x;
-                this.parameters.stepSizes[3] = Math.sqrt(ePos.x) / ePos.y;
-            },
+        this.initParams();
 
-            setDimensions: function (val) {
-                this.parameters.dimensions = parseInt(val);
-            },
+        // Update Displays
+        Object.keys(this.displays).forEach(key => {
+            const val = this.inputs[key].value;
+            this.displays[key].textContent = key === 'dimensions' || key === 'damping' ?
+                parseInt(val) : parseFloat(val).toFixed(2);
+        });
 
-            setThickness: function (val) {
-                this.parameters.thickness = parseFloat(val);
-            },
+        this.render();
+    }
 
-            setRotation: function (val) {
-                this.parameters.rotationAmplitude = parseFloat(val) * Math.PI * 2;
-            },
+    updateCurrentYear() {
+        id('currentYear').textContent = new Date().getFullYear();
+    }
+}
 
-            setDamping: function (val) {
-                var percentage = parseFloat(val);
-                // Map 0% -> 0.9999 (least damping/long life)
-                // Map 100% -> 0.9990 (most damping/short life)
-                var d = 0.9999 - (percentage / 100) * 0.0009;
-                for (var i = 0; i < 4; i++) {
-                    this.parameters.friction[i] = d;
-                }
-            },
+// Utility
+function id(name) { return document.getElementById(name); }
 
-            generateLissajous: function () {
-                var rawX, rawY, rotatedX, rotatedY,
-                    max = this.parameters.amplitudes.slice(),
-                    angle = [0, 0, 0, 0],
-                    rotTimer = 0,
-                    rotAngle = 0,
-                    dampingRatio = 1;
-
-                this.lissajousFigure = [];
-
-                // Continue as long as any significant pendulum is still moving
-                var limit = 2; // End when amplitude drops below 2 pixels
-                var counts = 0;
-
-                while ((max[0] > limit || max[1] > limit || max[2] > limit || max[3] > limit) && counts < 8000) {
-                    counts++;
-
-                    // Pendulum decay ratio for rotation
-                    dampingRatio = max[0] / this.parameters.amplitudes[0];
-
-                    // Calc raw pendulum positions
-                    rawX = 0;
-                    rawY = 0;
-
-                    if (this.parameters.dimensions >= 1) rawX += Math.sin(angle[0] + this.parameters.phases[0]) * max[0];
-                    if (this.parameters.dimensions >= 2) rawY += Math.cos(angle[1] + this.parameters.phases[1]) * max[1];
-                    if (this.parameters.dimensions >= 3) rawX += Math.sin(angle[2] + this.parameters.phases[2]) * max[2];
-                    if (this.parameters.dimensions >= 4) rawY += Math.cos(angle[3] + this.parameters.phases[3]) * max[3];
-
-                    // Apply Rotary Oscillation (Swing)
-                    rotAngle = this.parameters.rotationAmplitude * Math.sin(rotTimer) * dampingRatio;
-
-                    rotatedX = rawX * Math.cos(rotAngle) - rawY * Math.sin(rotAngle);
-                    rotatedY = rawX * Math.sin(rotAngle) + rawY * Math.cos(rotAngle);
-
-                    this.lissajousFigure.push([rotatedX, rotatedY]);
-
-                    // Update angles and apply damping
-                    for (var i = 0; i < 4; i++) {
-                        angle[i] += this.parameters.stepSizes[i];
-                        max[i] *= this.parameters.friction[i];
-                    }
-                    rotTimer += this.parameters.rotationStepSize;
-                }
-            }
-        };
-
-        harmonographController.init();
-
-    }());
-
+// Initialize
+window.addEventListener('DOMContentLoaded', () => {
+    window.harmonograph = new Harmonograph();
 });
-
-// Save parameters with image to regenerate it?
