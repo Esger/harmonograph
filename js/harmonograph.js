@@ -3,6 +3,18 @@
  * Modernized ES6 Implementation
  */
 
+// Iframe detection - add class to body if loaded in iframe
+if (window.parent !== window) {
+    // document is being loaded in an iframe
+    if (document.body) {
+        document.body.classList.add('isIframed');
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('isIframed');
+        });
+    }
+}
+
 class Harmonograph {
     constructor() {
         this.initCanvas();
