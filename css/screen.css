@@ -348,6 +348,54 @@ input[type=range]:active::-webkit-slider-thumb {
     letter-spacing: 0;
 }
 
+input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+/* Rainbow mode when custom color is disabled */
+.rainbow-mode {
+    opacity: 0.7;
+    /* Slightly higher than just 0.5 for visibility */
+    pointer-events: none;
+}
+
+.rainbow-mode input[type="color"]::-webkit-color-swatch {
+    background: linear-gradient(45deg,
+            #ff0000 0%,
+            #ff7f00 16.7%,
+            #ffff00 33.3%,
+            #00ff00 50%,
+            #0000ff 66.7%,
+            #4b0082 83.3%,
+            #8f00ff 100%) !important;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+#colorValue {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
 /* Tooltip */
 .tooltip {
     position: absolute;
@@ -406,5 +454,23 @@ input[type=range]:active::-webkit-slider-thumb {
 
     .app-footer {
         display: none;
+    }
+}
+
+/* Squircle corners for browsers that support it */
+@supports (corner-shape: squircle) or (-webkit-corner-shape: squircle) {
+
+    .hamburger-icon span,
+    .controls-panel,
+    .close-icon span,
+    .checkbox-wrapper input[type="checkbox"],
+    input[type=range]::-webkit-slider-runnable-track,
+    .btn,
+    .shortcut-hint,
+    input[type="color"],
+    input[type="color"]::-webkit-color-swatch,
+    .tooltip {
+        corner-shape: squircle;
+        -webkit-corner-shape: squircle;
     }
 }

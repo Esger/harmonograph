@@ -49,8 +49,12 @@ class Harmonograph {
             rotation: id('rotation'),
             damping: id('damping'),
             thickness: id('thickness'),
-            natural: id('naturalMode')
+            natural: id('naturalMode'),
+            customColor: id('customColor'),
+            lineColor: id('lineColor')
         };
+
+        this.colorPickerContainer = id('colorPickerContainer');
 
         // Capture initial values from HTML
         this.initialValues = {
@@ -58,15 +62,23 @@ class Harmonograph {
             rotation: this.inputs.rotation.value,
             damping: this.inputs.damping.value,
             thickness: this.inputs.thickness.value,
-            natural: this.inputs.natural.checked
+            natural: this.inputs.natural.checked,
+            customColor: this.inputs.customColor.checked,
+            lineColor: this.inputs.lineColor.value
         };
 
         this.displays = {
             dimensions: id('dimensionsValue'),
             rotation: id('rotationValue'),
             damping: id('dampingValue'),
-            thickness: id('thicknessValue')
+            thickness: id('thicknessValue'),
+            color: id('colorValue')
         };
+
+        // Initialize color picker UI state
+        const isCustom = this.inputs.customColor.checked;
+        this.colorPickerContainer.classList.toggle('rainbow-mode', !isCustom);
+        this.displays.color.textContent = isCustom ? this.inputs.lineColor.value.toUpperCase() : 'RAINBOW';
     }
 
     addEventListeners() {
@@ -106,6 +118,19 @@ class Harmonograph {
 
         // UI Controls
         this.inputs.natural.addEventListener('change', () => this.render());
+
+        this.inputs.customColor.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            this.colorPickerContainer.classList.toggle('rainbow-mode', !enabled);
+            this.displays.color.textContent = enabled ? this.inputs.lineColor.value.toUpperCase() : 'RAINBOW';
+            this.render();
+        });
+
+        this.inputs.lineColor.addEventListener('input', (e) => {
+            this.displays.color.textContent = e.target.value.toUpperCase();
+            this.render();
+        });
+
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.resetBtn.addEventListener('click', () => this.reset());
     }
@@ -242,19 +267,24 @@ class Harmonograph {
         this.ctx.lineJoin = 'round';
 
         const f = 0.002;
+        const useCustom = this.inputs.customColor.checked;
+        const customColor = this.inputs.lineColor.value;
+
         this.ctx.beginPath();
         this.ctx.moveTo(this.points[0][0] + centerX, this.points[0][1] + centerY);
 
         for (let i = 1; i < this.points.length; i++) {
-            const blue = Math.sin(f * i + 0) * 127 + 128;
-            const red = Math.sin(f * i + 2) * 127 + 128;
-            const green = Math.sin(f * i + 4) * 127 + 128;
+            if (useCustom) {
+                this.ctx.strokeStyle = customColor;
+            } else {
+                const blue = Math.sin(f * i + 0) * 127 + 128;
+                const red = Math.sin(f * i + 2) * 127 + 128;
+                const green = Math.sin(f * i + 4) * 127 + 128;
+                this.ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
+            }
 
-            this.ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
             this.ctx.lineTo(this.points[i][0] + centerX, this.points[i][1] + centerY);
 
-            // To make the rainbow effect work line by line, we might need a different approach
-            // But for performance at 8000 points, batching or many paths is needed.
             if (i % 20 === 0) {
                 this.ctx.stroke();
                 this.ctx.beginPath();
@@ -286,6 +316,13 @@ class Harmonograph {
         this.inputs.damping.value = this.initialValues.damping;
         this.inputs.thickness.value = this.initialValues.thickness;
         this.inputs.natural.checked = this.initialValues.natural;
+        this.inputs.customColor.checked = this.initialValues.customColor;
+        this.inputs.lineColor.value = this.initialValues.lineColor;
+
+        // Reset color container state
+        this.colorPickerContainer.classList.toggle('rainbow-mode', !this.initialValues.customColor);
+        this.displays.color.textContent = this.initialValues.customColor ?
+            this.initialValues.lineColor.toUpperCase() : 'RAINBOW';
 
         this.initParams();
 
