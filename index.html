@@ -55,26 +55,32 @@
                     </span>
                 </button>
                 <section class="control-group">
-                    <h3>Pendulums</h3>
+                    <div class="control-header">
+                        <h3>Pendulums</h3>
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="naturalMode" checked>
+                            <span class="checkbox-label">Natural</span>
+                        </label>
+                    </div>
                     <div class="input-wrapper">
-                        <input type="range" id="dimensions" min="1" max="4" value="2" step="1">
-                        <span class="value-display" id="dimensionsValue">2</span>
+                        <input type="range" id="dimensions" min="1" max="4" value="4" step="1">
+                        <span class="value-display" id="dimensionsValue">4</span>
                     </div>
                 </section>
 
                 <section class="control-group">
                     <h3>Swing</h3>
                     <div class="input-wrapper">
-                        <input type="range" id="rotation" min="0" max="1" value="0.5" step="0.01">
-                        <span class="value-display" id="rotationValue">0.5</span>
+                        <input type="range" id="rotation" min="0" max="1" value="0" step="0.01">
+                        <span class="value-display" id="rotationValue">0</span>
                     </div>
                 </section>
 
                 <section class="control-group">
                     <h3>Damping</h3>
                     <div class="input-wrapper">
-                        <input type="range" id="damping" min="0" max="100" value="80" step="1">
-                        <span class="value-display" id="dampingValue">80</span>
+                        <input type="range" id="damping" min="0" max="100" value="30" step="1">
+                        <span class="value-display" id="dampingValue">30</span>
                     </div>
                 </section>
 

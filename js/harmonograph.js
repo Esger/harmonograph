@@ -6,8 +6,8 @@
 class Harmonograph {
     constructor() {
         this.initCanvas();
-        this.initParams();
         this.initDOM();
+        this.initParams();
         this.addEventListeners();
 
         this.shiftPressed = false;
@@ -26,15 +26,16 @@ class Harmonograph {
 
     initParams() {
         this.params = {
-            dimensions: 2,
+            dimensions: parseInt(this.inputs.dimensions.value),
             amplitudes: [250, 250, 250, 250],
             stepSizes: [Math.PI / 45, Math.PI / 45.1, Math.PI / 45.2, Math.PI / 45.3],
             phases: [0, Math.PI / 2, Math.PI / 4, Math.PI / 3],
             friction: [0.9992, 0.9992, 0.9992, 0.9992],
-            thickness: 1,
-            rotationAmplitude: Math.PI, // 0.5 * PI * 2
+            thickness: parseFloat(this.inputs.thickness.value),
+            rotationAmplitude: parseFloat(this.inputs.rotation.value) * Math.PI * 2,
             rotationStepSize: Math.PI / 100
         };
+        this.setDamping(this.inputs.damping.value);
     }
 
     initDOM() {
@@ -47,7 +48,17 @@ class Harmonograph {
             dimensions: id('dimensions'),
             rotation: id('rotation'),
             damping: id('damping'),
-            thickness: id('thickness')
+            thickness: id('thickness'),
+            natural: id('naturalMode')
+        };
+
+        // Capture initial values from HTML
+        this.initialValues = {
+            dimensions: this.inputs.dimensions.value,
+            rotation: this.inputs.rotation.value,
+            damping: this.inputs.damping.value,
+            thickness: this.inputs.thickness.value,
+            natural: this.inputs.natural.checked
         };
 
         this.displays = {
@@ -93,6 +104,7 @@ class Harmonograph {
         });
 
         // UI Controls
+        this.inputs.natural.addEventListener('change', () => this.render());
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.resetBtn.addEventListener('click', () => this.reset());
     }
@@ -151,8 +163,25 @@ class Harmonograph {
             // Set Pen Params (Pendulums 1 & 2)
             this.params.amplitudes[0] = Math.sqrt(x) * 15;
             this.params.amplitudes[1] = Math.sqrt(y) * 15;
-            this.params.stepSizes[0] = Math.sqrt(y) / (x || 1);
-            this.params.stepSizes[1] = Math.sqrt(x) / (y || 1);
+
+            if (this.inputs.natural.checked) {
+                // Natural mode: frequencies stay very close (approx 1:1) to allow for precessing ellipses
+                const rawFreq0 = Math.sqrt(y) / (x || 1);
+                const rawFreq1 = Math.sqrt(x) / (y || 1);
+                const avgFreq = (rawFreq0 + rawFreq1) / 2;
+
+                // Allow a tiny difference (0.5%) for that "natural" slow rotation/evolution
+                const diff = (rawFreq1 - rawFreq0) * 0.05;
+
+                this.params.stepSizes[0] = avgFreq - diff;
+                this.params.stepSizes[1] = avgFreq + diff;
+
+                // Ensure phase offset for elliptical movement
+                this.params.phases[1] = Math.PI / 2;
+            } else {
+                this.params.stepSizes[0] = Math.sqrt(y) / (x || 1);
+                this.params.stepSizes[1] = Math.sqrt(x) / (y || 1);
+            }
         }
 
         this.render();
@@ -250,16 +279,20 @@ class Harmonograph {
     }
 
     reset() {
-        this.initParams();
-        // Reset Inputs
-        this.inputs.dimensions.value = 2;
-        this.inputs.rotation.value = 0.5;
-        this.inputs.damping.value = 80;
-        this.inputs.thickness.value = 1;
+        // Restore values to inputs
+        this.inputs.dimensions.value = this.initialValues.dimensions;
+        this.inputs.rotation.value = this.initialValues.rotation;
+        this.inputs.damping.value = this.initialValues.damping;
+        this.inputs.thickness.value = this.initialValues.thickness;
+        this.inputs.natural.checked = this.initialValues.natural;
 
-        // Reset Displays
+        this.initParams();
+
+        // Update Displays
         Object.keys(this.displays).forEach(key => {
-            this.displays[key].textContent = this.inputs[key].value;
+            const val = this.inputs[key].value;
+            this.displays[key].textContent = key === 'dimensions' || key === 'damping' ?
+                parseInt(val) : parseFloat(val).toFixed(2);
         });
 
         this.render();
