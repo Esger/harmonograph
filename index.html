@@ -1,89 +1,127 @@
 <!DOCTYPE html>
-<html xmlns="https://www.w3.org/1999/xhtml">
+<html lang="en">
 
-<head>
-    <meta http-equiv="Content-Type"
-          content="text/html; charset=UTF-8" />
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Harmonograph &vellip; create Lissajous figures</title>
-    <script type="text/javascript"
-            src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
-    <link rel="stylesheet"
-          href="css/reset.css" />
-    <link rel="stylesheet"
-          href="css/screen.css" />
-    <script type="text/javascript">
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-2700808-7']);
-        _gaq.push(['_trackPageview']);
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1.0">
+        <title>Harmonograph | Interactive Lissajous Figures</title>
 
-        (function () {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
+        <!-- Modern Typography -->
+        <link rel="preconnect"
+              href="https://fonts.googleapis.com">
+        <link rel="preconnect"
+              href="https://fonts.gstatic.com"
+              crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@400;600;700&display=swap"
+              rel="stylesheet">
 
-    </script>
-</head>
+        <link rel="stylesheet"
+              href="css/screen.css">
+    </head>
 
-<body>
-    <div id="container"
-         class="container">
-
-        <header class="">
-            <div class="addThis">
-            </div>
-            <h1 class="">Harmonograph</h1>
-
-            <section class="wizzard ">
-                <p>Move your mouse or finger over the canvas slowly.</br>
-                    And watch the magic happen.</p>
-                <p>Click somewhere on the canvas.</br>
-                    This changes the third and or fourth dimensions.</p>
-                <p>Change the number of dimensions with the slider.</br>
-                    Have fun!</p>
-                <p>Press shift to show and constrain to harmonics guides.</p>
-                <p>Thanks for sharing.</p>
-            </section>
-        </header>
-
-        <canvas id="myCanvas"
-                class="myCanvas"
-                class="">
-            Please install a modern browser, <a href="http://browsehappy.com/".>Browse happy</a>
-        </canvas>
-
-        <footer class="">
-            <section class="hint">
-                <h2>Create Lissajous figures interactively</h2>
-                <p>Follow the tips and watch the magic happen.</p>
-                <p><a href="snapshot.php" class="r createSnapshot">Make a snapshot to share&hellip;</a></p>
-            </section>
-            <section class="settings">
-                <div class="setting">
-                    <input type="range" min="1" max="3" value="2" id="dimensions" class="">
-                    <label for=dimensions class="">Dimensions <span class='ieOnly'>&hellip; enter a value from 1 to 3</span></label>
+    <body class="dark-mode">
+        <div id="app"
+             class="app-container">
+            <header class="main-header">
+                <h1 class="logo">Harmonograph</h1>
+                <div class="controls-trigger">
+                    <button id="toggleControls" popovertarget="controls" aria-label="Open Settings">
+                        <span class="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </button>
                 </div>
-                <p class=""><a href="https://www.ashware.nl">&copy; ashWare</a></p>
-            </section>
-        </footer>
+            </header>
 
-    </div>
+            <main class="canvas-wrapper">
+                <canvas id="harmonographCanvas"></canvas>
 
-    <script type="text/javascript"
-            src="js/shortcuts.min.js"></script>
-    <script type="text/javascript"
-            src="js/harmonograph.js"></script>
+                <div id="tooltip"
+                     class="tooltip">
+                    <p class="tooltip-text">Move your pointer slowly to draw</p>
+                </div>
+            </main>
 
-    <!-- AddThis Button BEGIN -->
-    <div class="addthis_toolbox addthis_default_style ">
-        <a class="addthis_counter addthis_pill_style"></a>
-    </div>
-    <script type="text/javascript"
-            src="https://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4f3c4b976815089f"></script>
-    <!-- AddThis Button END -->
+            <aside id="controls"
+                   class="controls-panel"
+                   popover>
+                <button class="close-btn" popovertarget="controls" aria-label="Close Settings">
+                    <span class="close-icon">
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                <section class="control-group">
+                    <div class="control-header">
+                        <h3>Pendulums</h3>
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="naturalMode" checked>
+                            <span class="checkbox-label">Natural</span>
+                        </label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="range" id="dimensions" min="1" max="4" value="4" step="1">
+                        <span class="value-display" id="dimensionsValue">4</span>
+                    </div>
+                </section>
 
-</body>
+                <section class="control-group">
+                    <h3>Swing</h3>
+                    <div class="input-wrapper">
+                        <input type="range" id="rotation" min="0" max="1" value="0" step="0.01">
+                        <span class="value-display" id="rotationValue">0</span>
+                    </div>
+                </section>
+
+                <section class="control-group">
+                    <h3>Damping</h3>
+                    <div class="input-wrapper">
+                        <input type="range" id="damping" min="0" max="100" value="30" step="1">
+                        <span class="value-display" id="dampingValue">30</span>
+                    </div>
+                </section>
+
+                <section class="control-group">
+                    <h3>Thickness</h3>
+                    <div class="input-wrapper">
+                        <input type="range" id="thickness" min="0.5" max="5" value="1" step="0.25">
+                        <span class="value-display" id="thicknessValue">1.0</span>
+                    </div>
+                </section>
+
+                <section class="control-group">
+                    <div class="control-header">
+                        <h3>Color</h3>
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="customColor">
+                            <span class="checkbox-label">Custom</span>
+                        </label>
+                    </div>
+                    <div class="input-wrapper rainbow-mode"
+                         id="colorPickerContainer">
+                        <input type="color" id="lineColor" value="#6366f1">
+                        <span class="value-display" id="colorValue">RAINBOW</span>
+                    </div>
+                </section>
+
+                <footer class="controls-footer">
+                    <button id="downloadBtn" class="btn btn-primary">
+                        Download Piece <span class="shortcut-hint">D</span>
+                    </button>
+                    <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                </footer>
+            </aside>
+
+            <footer class="app-footer">
+                <p>&copy; <span id="currentYear"></span> ashWare | Created with &hearts;</p>
+            </footer>
+        </div>
+
+        <script type="module"
+                src="js/harmonograph.js"></script>
+    </body>
 
 </html>
