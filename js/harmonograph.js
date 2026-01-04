@@ -98,6 +98,7 @@ class Harmonograph {
         // Keyboard
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Shift') this.shiftPressed = true;
+            if (e.key.toLowerCase() === 'd') this.downloadImage();
         });
         window.addEventListener('keyup', (e) => {
             if (e.key === 'Shift') this.shiftPressed = false;
