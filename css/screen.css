@@ -292,6 +292,10 @@ body {
     gap: 1rem;
 }
 
+#colorPickerContainer {
+    cursor: pointer;
+}
+
 .value-display {
     font-family: var(--font-heading);
     font-variant-numeric: tabular-nums;
@@ -417,7 +421,6 @@ input[type="color"]::-webkit-color-swatch {
 .rainbow-mode {
     opacity: 0.7;
     /* Slightly higher than just 0.5 for visibility */
-    pointer-events: none;
 }
 
 .rainbow-mode input[type="color"]::-webkit-color-swatch {

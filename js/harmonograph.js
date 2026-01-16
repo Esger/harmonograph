@@ -149,9 +149,23 @@ class Harmonograph {
             this.render();
         });
 
+        // Click wrapper to toggle mode and open picker
+        this.colorPickerContainer.addEventListener('click', (e) => {
+            if (!this.inputs.customColor.checked) {
+                this.inputs.customColor.checked = true;
+                this.inputs.customColor.dispatchEvent(new Event('change'));
+            }
+            // If click was on the container background or text, trigger the hidden color input
+            if (e.target !== this.inputs.lineColor) {
+                this.inputs.lineColor.click();
+            }
+        });
+
         this.inputs.lineColor.addEventListener('input', (e) => {
-            this.displays.color.textContent = e.target.value.toUpperCase();
-            this.render();
+            if (this.inputs.customColor.checked) {
+                this.displays.color.textContent = e.target.value.toUpperCase();
+                this.render();
+            }
         });
 
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
