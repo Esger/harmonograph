@@ -30,6 +30,7 @@ class Harmonograph {
         this.updateCurrentYear();
         this.resize();
         this.render();
+        this.initTooltips();
     }
 
     initCanvas() {
@@ -56,6 +57,7 @@ class Harmonograph {
         this.downloadBtn = id('downloadBtn');
         this.resetBtn = id('resetBtn');
         this.tooltip = id('tooltip');
+        this.tooltipText = this.tooltip.querySelector('.tooltip-text');
 
         this.inputs = {
             dimensions: id('dimensions'),
@@ -176,6 +178,24 @@ class Harmonograph {
             this.menuOpen = e.newState === 'open';
             this.canvas.classList.toggle('interaction-disabled', this.menuOpen);
         });
+    }
+
+    initTooltips() {
+        this.tips = [
+            "Move your pointer slowly to adjust the primary pendulum",
+            "Click to adjust the secondary pendulum"
+        ];
+        this.currentTipIndex = 0;
+
+        setInterval(() => {
+            this.currentTipIndex = (this.currentTipIndex + 1) % this.tips.length;
+            this.tooltipText.style.opacity = 0;
+
+            setTimeout(() => {
+                this.tooltipText.textContent = this.tips[this.currentTipIndex];
+                this.tooltipText.style.opacity = 1;
+            }, 500); // Wait for fade out
+        }, 15000); // 15 seconds
     }
 
     handleParamChange(key, value) {

@@ -464,6 +464,7 @@ input[type="color"]::-webkit-color-swatch {
 .tooltip-text {
     font-size: 0.85rem;
     color: var(--text-secondary);
+    transition: opacity 0.5s ease;
 }
 
 /* App Footer */
