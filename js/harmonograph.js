@@ -389,8 +389,20 @@ class Harmonograph {
 
     downloadImage() {
         const link = document.createElement('a');
-        link.download = `harmonograph-${Date.now()}.webp`;
-        link.href = this.canvas.toDataURL('image/webp');
+        const timestamp = Date.now();
+
+        // Check for JPEG XL support (falls back to WebP if unsupported)
+        const jxlData = this.canvas.toDataURL('image/jxl');
+        const isJxlSupported = jxlData.startsWith('data:image/jxl');
+
+        if (isJxlSupported) {
+            link.download = `harmonograph-${timestamp}.jxl`;
+            link.href = jxlData;
+        } else {
+            link.download = `harmonograph-${timestamp}.webp`;
+            link.href = this.canvas.toDataURL('image/webp');
+        }
+
         link.click();
     }
 
