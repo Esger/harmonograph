@@ -31,6 +31,7 @@ class Harmonograph {
         this.resize();
         this.render();
         this.initTooltips();
+        this.startSmoothingLoop();
     }
 
     initCanvas() {
@@ -50,6 +51,9 @@ class Harmonograph {
             rotationStepSize: Math.PI / 100
         };
         this.setDamping(this.inputs.damping.value);
+
+        // Target params for smoothing
+        this.targetParams = JSON.parse(JSON.stringify(this.params));
     }
 
     initDOM() {
@@ -65,6 +69,7 @@ class Harmonograph {
             damping: id('damping'),
             thickness: id('thickness'),
             natural: id('naturalMode'),
+            smooth: id('smoothMode'),
             customColor: id('customColor'),
             lineColor: id('lineColor')
         };
@@ -78,6 +83,7 @@ class Harmonograph {
             damping: this.inputs.damping.value,
             thickness: this.inputs.thickness.value,
             natural: this.inputs.natural.checked,
+            smooth: this.inputs.smooth.checked,
             customColor: this.inputs.customColor.checked,
             lineColor: this.inputs.lineColor.value
         };
@@ -202,6 +208,50 @@ class Harmonograph {
         }, 10000); // 15 seconds
     }
 
+    startSmoothingLoop() {
+        const tick = () => {
+            if (this.inputs.smooth.checked) {
+                let needsRender = false;
+                const easing = 0.02;
+
+                for (let i = 0; i < 4; i++) {
+                    // Amplitudes
+                    const ampDiff = this.targetParams.amplitudes[i] - this.params.amplitudes[i];
+                    if (Math.abs(ampDiff) > 0.1) {
+                        this.params.amplitudes[i] += ampDiff * easing;
+                        needsRender = true;
+                    } else {
+                        this.params.amplitudes[i] = this.targetParams.amplitudes[i];
+                    }
+
+                    // Step Sizes
+                    const stepDiff = this.targetParams.stepSizes[i] - this.params.stepSizes[i];
+                    if (Math.abs(stepDiff) > 0.00001) {
+                        this.params.stepSizes[i] += stepDiff * easing;
+                        needsRender = true;
+                    } else {
+                        this.params.stepSizes[i] = this.targetParams.stepSizes[i];
+                    }
+
+                    // Phases
+                    const phaseDiff = this.targetParams.phases[i] - this.params.phases[i];
+                    if (Math.abs(phaseDiff) > 0.001) {
+                        this.params.phases[i] += phaseDiff * easing;
+                        needsRender = true;
+                    } else {
+                        this.params.phases[i] = this.targetParams.phases[i];
+                    }
+                }
+
+                if (needsRender) {
+                    this.render();
+                }
+            }
+            requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+    }
+
     handleParamChange(key, value) {
         const val = parseFloat(value);
         this.displays[key].textContent = val.toFixed(key === 'dimensions' || key === 'damping' ? 0 : 2);
@@ -259,16 +309,19 @@ class Harmonograph {
         const vx = nx * 1000;
         const vy = ny * 1000;
 
+        const isSmooth = this.inputs.smooth.checked;
+        const p = isSmooth ? this.targetParams : this.params;
+
         if (isClick) {
             // Set Table Params (Pendulums 3 & 4)
-            this.params.amplitudes[2] = Math.sqrt(vx) * 15;
-            this.params.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(vy) * 15 : 0;
-            this.params.stepSizes[2] = Math.sqrt(vy) / (vx || 1);
-            this.params.stepSizes[3] = Math.sqrt(vx) / (vy || 1);
+            p.amplitudes[2] = Math.sqrt(vx) * 15;
+            p.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(vy) * 15 : 0;
+            p.stepSizes[2] = Math.sqrt(vy) / (vx || 1);
+            p.stepSizes[3] = Math.sqrt(vx) / (vy || 1);
         } else {
             // Set Pen Params (Pendulums 1 & 2)
-            this.params.amplitudes[0] = Math.sqrt(vx) * 15;
-            this.params.amplitudes[1] = Math.sqrt(vy) * 15;
+            p.amplitudes[0] = Math.sqrt(vx) * 15;
+            p.amplitudes[1] = Math.sqrt(vy) * 15;
 
             if (this.inputs.natural.checked) {
                 // Natural mode: frequencies stay very close (approx 1:1)
@@ -279,18 +332,20 @@ class Harmonograph {
                 // Allow a tiny difference (5%) for slow evolution
                 const diff = (rawFreq1 - rawFreq0) * 0.05;
 
-                this.params.stepSizes[0] = avgFreq - diff;
-                this.params.stepSizes[1] = avgFreq + diff;
+                p.stepSizes[0] = avgFreq - diff;
+                p.stepSizes[1] = avgFreq + diff;
 
                 // Ensure phase offset for elliptical movement
-                this.params.phases[1] = Math.PI / 2;
+                p.phases[1] = Math.PI / 2;
             } else {
-                this.params.stepSizes[0] = Math.sqrt(vy) / (vx || 1);
-                this.params.stepSizes[1] = Math.sqrt(vx) / (vy || 1);
+                p.stepSizes[0] = Math.sqrt(vy) / (vx || 1);
+                p.stepSizes[1] = Math.sqrt(vx) / (vy || 1);
             }
         }
 
-        this.render();
+        if (!isSmooth) {
+            this.render();
+        }
     }
 
     generatePoints() {
@@ -413,6 +468,7 @@ class Harmonograph {
         this.inputs.damping.value = this.initialValues.damping;
         this.inputs.thickness.value = this.initialValues.thickness;
         this.inputs.natural.checked = this.initialValues.natural;
+        this.inputs.smooth.checked = this.initialValues.smooth;
         this.inputs.customColor.checked = this.initialValues.customColor;
         this.inputs.lineColor.value = this.initialValues.lineColor;
 

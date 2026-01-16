@@ -71,10 +71,16 @@
                 <section class="control-group">
                     <div class="control-header">
                         <h3>Pendulums</h3>
-                        <label class="checkbox-wrapper">
-                            <input type="checkbox" id="naturalMode" checked>
-                            <span class="checkbox-label">Natural</span>
-                        </label>
+                        <div class="header-options">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="naturalMode" checked>
+                                <span class="checkbox-label">Natural</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="smoothMode" checked>
+                                <span class="checkbox-label">Smooth</span>
+                            </label>
+                        </div>
                     </div>
                     <div class="input-wrapper">
                         <input type="range" id="dimensions" min="1" max="4" value="4" step="1">
@@ -91,7 +97,7 @@
                 </section>
 
                 <section class="control-group">
-                    <h3>Damping</h3>
+                    <h3>Friction</h3>
                     <div class="input-wrapper">
                         <input type="range" id="damping" min="0" max="100" value="30" step="1">
                         <span class="value-display" id="dampingValue">30</span>
@@ -129,7 +135,7 @@
             </aside>
 
             <footer class="app-footer">
-                <p>&copy; <span id="currentYear"></span> ashWare | Created with &hearts;</p>
+                <p>&copy; <span id="currentYear"></span>&nbsp;<a href="https://ashware.nl" target="_blank">ashWare</a> | Created with &hearts;</p>
             </footer>
         </div>
 

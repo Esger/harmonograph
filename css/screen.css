@@ -238,8 +238,15 @@ body {
 .control-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 0.75rem;
+}
+
+.header-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
 }
 
 .control-group h3 {
@@ -493,6 +500,17 @@ input[type="color"]::-webkit-color-swatch {
     opacity: 0.4;
     font-size: 0.75rem;
     pointer-events: none;
+
+    a {
+        color: var(--text-primary);
+        text-decoration: none;
+        pointer-events: all;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 }
 
 @media (max-width: 768px) {
