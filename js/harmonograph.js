@@ -183,7 +183,11 @@ class Harmonograph {
     initTooltips() {
         this.tips = [
             "Move your pointer slowly to adjust the primary pendulum",
-            "Click to adjust the secondary pendulum"
+            "Click to adjust the secondary pendulum",
+            "Press SHIFT to interlock x and y axes of the same pendulums",
+            "Press M to open the menu",
+            "Press R to reset all parameters",
+            "Press D to download the harmonogram"
         ];
         this.currentTipIndex = 0;
 
@@ -195,7 +199,7 @@ class Harmonograph {
                 this.tooltipText.textContent = this.tips[this.currentTipIndex];
                 this.tooltipText.style.opacity = 1;
             }, 500); // Wait for fade out
-        }, 15000); // 15 seconds
+        }, 10000); // 15 seconds
     }
 
     handleParamChange(key, value) {
