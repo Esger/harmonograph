@@ -22,8 +22,8 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     font-family: var(--font-main);
-    height: 100vh;
-    width: 100vw;
+    height: 100dvh;
+    width: 100dvw;
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
 }
@@ -511,7 +511,20 @@ input[type="color"]::-webkit-color-swatch {
     }
 
     .app-footer {
-        display: none;
+        bottom: 1rem;
+        right: 0;
+        left: 0;
+        text-align: center;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .tooltip {
+        bottom: 3.5rem;
+        opacity: 1;
+        /* Always visible on mobile since there is no hover */
+        width: 90%;
+        max-width: 320px;
     }
 }
 
