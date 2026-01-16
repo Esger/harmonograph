@@ -16,6 +16,9 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@400;600;700&display=swap"
               rel="stylesheet">
 
+        <link rel="icon"
+              type="image/svg+xml"
+              href="favicon.svg">
         <link rel="stylesheet"
               href="css/screen.css">
     </head>
@@ -48,12 +51,23 @@
             <aside id="controls"
                    class="controls-panel"
                    popover>
-                <button class="close-btn" popovertarget="controls" aria-label="Close Settings">
-                    <span class="close-icon">
-                        <span></span>
-                        <span></span>
-                    </span>
-                </button>
+                <header class="panel-header">
+                    <h2>Settings <span class="shortcut-hint">M</span></h2>
+                    <div class="header-actions">
+                        <button id="resetBtn" class="icon-btn" aria-label="Reset Settings" title="Reset (R)">
+                            <svg class="reset-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                        </button>
+                        <button class="close-btn" popovertarget="controls" aria-label="Close Settings">
+                            <span class="close-icon">
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </button>
+                    </div>
+                </header>
                 <section class="control-group">
                     <div class="control-header">
                         <h3>Pendulums</h3>
@@ -111,7 +125,6 @@
                     <button id="downloadBtn" class="btn btn-primary">
                         Download Piece <span class="shortcut-hint">D</span>
                     </button>
-                    <button id="resetBtn" class="btn btn-secondary">Reset</button>
                 </footer>
             </aside>
 

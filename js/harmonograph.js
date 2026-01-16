@@ -23,12 +23,14 @@ class Harmonograph {
         this.addEventListeners();
 
         this.shiftPressed = false;
+        this.menuOpen = false;
         this.points = [];
 
         // Start initial render
         this.updateCurrentYear();
         this.resize();
         this.render();
+        this.initTooltips();
     }
 
     initCanvas() {
@@ -55,6 +57,7 @@ class Harmonograph {
         this.downloadBtn = id('downloadBtn');
         this.resetBtn = id('resetBtn');
         this.tooltip = id('tooltip');
+        this.tooltipText = this.tooltip.querySelector('.tooltip-text');
 
         this.inputs = {
             dimensions: id('dimensions'),
@@ -111,6 +114,7 @@ class Harmonograph {
 
         this.canvas.addEventListener('mousedown', (e) => this.handleInteraction(e, true));
         this.canvas.addEventListener('touchstart', (e) => {
+            if (this.menuOpen) return;
             e.preventDefault();
             this.handleInteraction(e.touches[0], true);
         }, { passive: false });
@@ -123,6 +127,15 @@ class Harmonograph {
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Shift') this.shiftPressed = true;
             if (e.key.toLowerCase() === 'd') this.downloadImage();
+            if (e.key.toLowerCase() === 'm') {
+                try {
+                    this.controlsPanel.togglePopover();
+                } catch (err) {
+                    // Fallback if togglePopover is not supported or errors
+                    console.error('Popover toggle failed', err);
+                }
+            }
+            if (e.key.toLowerCase() === 'r') this.reset();
         });
         window.addEventListener('keyup', (e) => {
             if (e.key === 'Shift') this.shiftPressed = false;
@@ -138,13 +151,55 @@ class Harmonograph {
             this.render();
         });
 
+        // Click wrapper to toggle mode and open picker
+        this.colorPickerContainer.addEventListener('click', (e) => {
+            if (!this.inputs.customColor.checked) {
+                this.inputs.customColor.checked = true;
+                this.inputs.customColor.dispatchEvent(new Event('change'));
+            }
+            // If click was on the container background or text, trigger the hidden color input
+            if (e.target !== this.inputs.lineColor) {
+                this.inputs.lineColor.click();
+            }
+        });
+
         this.inputs.lineColor.addEventListener('input', (e) => {
-            this.displays.color.textContent = e.target.value.toUpperCase();
-            this.render();
+            if (this.inputs.customColor.checked) {
+                this.displays.color.textContent = e.target.value.toUpperCase();
+                this.render();
+            }
         });
 
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.resetBtn.addEventListener('click', () => this.reset());
+
+        // Menu state tracking
+        this.controlsPanel.addEventListener('toggle', (e) => {
+            this.menuOpen = e.newState === 'open';
+            this.canvas.classList.toggle('interaction-disabled', this.menuOpen);
+        });
+    }
+
+    initTooltips() {
+        this.tips = [
+            "Move your pointer slowly to adjust the primary pendulum",
+            "Click to adjust the secondary pendulum",
+            "Press SHIFT to interlock x and y axes of the same pendulums",
+            "Press M to open the menu",
+            "Press R to reset all parameters",
+            "Press D to download the harmonogram"
+        ];
+        this.currentTipIndex = 0;
+
+        setInterval(() => {
+            this.currentTipIndex = (this.currentTipIndex + 1) % this.tips.length;
+            this.tooltipText.style.opacity = 0;
+
+            setTimeout(() => {
+                this.tooltipText.textContent = this.tips[this.currentTipIndex];
+                this.tooltipText.style.opacity = 1;
+            }, 500); // Wait for fade out
+        }, 10000); // 15 seconds
     }
 
     handleParamChange(key, value) {
@@ -178,6 +233,7 @@ class Harmonograph {
     }
 
     handleInteraction(e, isClick = false) {
+        if (this.menuOpen) return;
         const rect = this.canvas.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
@@ -357,8 +413,9 @@ class Harmonograph {
 
         // Update Displays
         Object.keys(this.displays).forEach(key => {
+            if (key === 'color') return; // Handled above
             const val = this.inputs[key].value;
-            this.displays[key].textContent = key === 'dimensions' || key === 'damping' ?
+            this.displays[key].textContent = (key === 'dimensions' || key === 'damping') ?
                 parseInt(val) : parseFloat(val).toFixed(2);
         });
 

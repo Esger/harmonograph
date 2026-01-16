@@ -51,6 +51,11 @@ body {
     cursor: crosshair;
 }
 
+#harmonographCanvas.interaction-disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
 /* Header */
 .main-header {
     position: absolute;
@@ -117,25 +122,60 @@ body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--panel-border);
     border-radius: var(--radius-lg);
-    padding: 4rem 1.5rem 1.5rem;
-    /* More top padding for close button space */
+    padding: 1rem;
     color: var(--text-primary);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     margin: 0;
-    border: 1px solid var(--panel-border);
+
+    /* Animation Properties */
+    transform-origin: calc(100% - 29px) 37px;
+    opacity: 0;
+    transform: rotate(90deg) scale(0.95);
+    transition:
+        opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+        transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+        display 0.5s allow-discrete,
+        overlay 0.5s allow-discrete;
 }
 
 .controls-panel:popover-open {
-    display: block;
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
 }
 
-/* Close button - Positioned exactly where hamburger was relative to screen */
-/* Hamburger is @ top 2rem, right 2rem. Popover @ top 1rem, right 1rem. */
-/* So close button @ top 1rem, right 1rem INSIDE popover. */
+@starting-style {
+    .controls-panel:popover-open {
+        opacity: 0;
+        transform: rotate(90deg) scale(0.95);
+    }
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.panel-header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: -0.5rem;
+}
+
+.icon-btn,
 .close-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -143,7 +183,24 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: all;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover,
+.close-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.icon-btn:active {
+    transform: scale(0.9);
+}
+
+.reset-icon {
+    width: 20px;
+    height: 20px;
 }
 
 .close-icon {
@@ -155,12 +212,15 @@ body {
 
 .close-icon span {
     display: block;
-    width: 100%;
+    width: 20px;
+    /* Slightly smaller to match SVG scale */
     height: 2px;
-    background-color: var(--text-primary);
+    background-color: currentColor;
     position: absolute;
     top: 50%;
+    left: 2px;
     border-radius: 1px;
+    transition: background-color 0.2s ease;
 }
 
 .close-icon span:first-child {
@@ -248,6 +308,10 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+#colorPickerContainer {
+    cursor: pointer;
 }
 
 .value-display {
@@ -375,7 +439,6 @@ input[type="color"]::-webkit-color-swatch {
 .rainbow-mode {
     opacity: 0.7;
     /* Slightly higher than just 0.5 for visibility */
-    pointer-events: none;
 }
 
 .rainbow-mode input[type="color"]::-webkit-color-swatch {
@@ -419,6 +482,7 @@ input[type="color"]::-webkit-color-swatch {
 .tooltip-text {
     font-size: 0.85rem;
     color: var(--text-secondary);
+    transition: opacity 0.5s ease;
 }
 
 /* App Footer */
