@@ -133,6 +133,7 @@ class Harmonograph {
                     console.error('Popover toggle failed', err);
                 }
             }
+            if (e.key.toLowerCase() === 'r') this.reset();
         });
         window.addEventListener('keyup', (e) => {
             if (e.key === 'Shift') this.shiftPressed = false;
