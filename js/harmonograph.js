@@ -23,6 +23,7 @@ class Harmonograph {
         this.addEventListeners();
 
         this.shiftPressed = false;
+        this.menuOpen = false;
         this.points = [];
 
         // Start initial render
@@ -111,6 +112,7 @@ class Harmonograph {
 
         this.canvas.addEventListener('mousedown', (e) => this.handleInteraction(e, true));
         this.canvas.addEventListener('touchstart', (e) => {
+            if (this.menuOpen) return;
             e.preventDefault();
             this.handleInteraction(e.touches[0], true);
         }, { passive: false });
@@ -123,6 +125,14 @@ class Harmonograph {
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Shift') this.shiftPressed = true;
             if (e.key.toLowerCase() === 'd') this.downloadImage();
+            if (e.key.toLowerCase() === 'm') {
+                try {
+                    this.controlsPanel.togglePopover();
+                } catch (err) {
+                    // Fallback if togglePopover is not supported or errors
+                    console.error('Popover toggle failed', err);
+                }
+            }
         });
         window.addEventListener('keyup', (e) => {
             if (e.key === 'Shift') this.shiftPressed = false;
@@ -145,6 +155,12 @@ class Harmonograph {
 
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.resetBtn.addEventListener('click', () => this.reset());
+
+        // Menu state tracking
+        this.controlsPanel.addEventListener('toggle', (e) => {
+            this.menuOpen = e.newState === 'open';
+            this.canvas.classList.toggle('interaction-disabled', this.menuOpen);
+        });
     }
 
     handleParamChange(key, value) {
@@ -178,6 +194,7 @@ class Harmonograph {
     }
 
     handleInteraction(e, isClick = false) {
+        if (this.menuOpen) return;
         const rect = this.canvas.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
