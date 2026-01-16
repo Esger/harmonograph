@@ -495,25 +495,19 @@ input[type="color"]::-webkit-color-swatch {
     pointer-events: none;
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
     .controls-panel {
-        top: auto;
-        bottom: 0;
-        right: 0;
-        width: 100%;
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-        transform: translateY(0);
-    }
-
-    .controls-panel.collapsed {
-        transform: translateY(100%);
-        opacity: 0;
+        top: 0.75rem;
+        right: 0.75rem;
+        left: 0.75rem;
+        width: auto;
+        border-radius: var(--radius-md);
     }
 
     .main-header {
-        top: 1rem;
-        left: 1rem;
+        top: 1.5rem;
+        left: 1.5rem;
+        right: 1.5rem;
     }
 
     .app-footer {
