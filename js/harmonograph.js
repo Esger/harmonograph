@@ -23,12 +23,15 @@ class Harmonograph {
         this.addEventListeners();
 
         this.shiftPressed = false;
+        this.menuOpen = false;
         this.points = [];
 
         // Start initial render
         this.updateCurrentYear();
         this.resize();
         this.render();
+        this.initTooltips();
+        this.startSmoothingLoop();
     }
 
     initCanvas() {
@@ -48,6 +51,9 @@ class Harmonograph {
             rotationStepSize: Math.PI / 100
         };
         this.setDamping(this.inputs.damping.value);
+
+        // Target params for smoothing
+        this.targetParams = JSON.parse(JSON.stringify(this.params));
     }
 
     initDOM() {
@@ -55,6 +61,7 @@ class Harmonograph {
         this.downloadBtn = id('downloadBtn');
         this.resetBtn = id('resetBtn');
         this.tooltip = id('tooltip');
+        this.tooltipText = this.tooltip.querySelector('.tooltip-text');
 
         this.inputs = {
             dimensions: id('dimensions'),
@@ -62,6 +69,7 @@ class Harmonograph {
             damping: id('damping'),
             thickness: id('thickness'),
             natural: id('naturalMode'),
+            smooth: id('smoothMode'),
             customColor: id('customColor'),
             lineColor: id('lineColor')
         };
@@ -75,6 +83,7 @@ class Harmonograph {
             damping: this.inputs.damping.value,
             thickness: this.inputs.thickness.value,
             natural: this.inputs.natural.checked,
+            smooth: this.inputs.smooth.checked,
             customColor: this.inputs.customColor.checked,
             lineColor: this.inputs.lineColor.value
         };
@@ -111,6 +120,7 @@ class Harmonograph {
 
         this.canvas.addEventListener('mousedown', (e) => this.handleInteraction(e, true));
         this.canvas.addEventListener('touchstart', (e) => {
+            if (this.menuOpen) return;
             e.preventDefault();
             this.handleInteraction(e.touches[0], true);
         }, { passive: false });
@@ -123,6 +133,15 @@ class Harmonograph {
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Shift') this.shiftPressed = true;
             if (e.key.toLowerCase() === 'd') this.downloadImage();
+            if (e.key.toLowerCase() === 'm') {
+                try {
+                    this.controlsPanel.togglePopover();
+                } catch (err) {
+                    // Fallback if togglePopover is not supported or errors
+                    console.error('Popover toggle failed', err);
+                }
+            }
+            if (e.key.toLowerCase() === 'r') this.reset();
         });
         window.addEventListener('keyup', (e) => {
             if (e.key === 'Shift') this.shiftPressed = false;
@@ -138,13 +157,99 @@ class Harmonograph {
             this.render();
         });
 
+        // Click wrapper to toggle mode and open picker
+        this.colorPickerContainer.addEventListener('click', (e) => {
+            if (!this.inputs.customColor.checked) {
+                this.inputs.customColor.checked = true;
+                this.inputs.customColor.dispatchEvent(new Event('change'));
+            }
+            // If click was on the container background or text, trigger the hidden color input
+            if (e.target !== this.inputs.lineColor) {
+                this.inputs.lineColor.click();
+            }
+        });
+
         this.inputs.lineColor.addEventListener('input', (e) => {
-            this.displays.color.textContent = e.target.value.toUpperCase();
-            this.render();
+            if (this.inputs.customColor.checked) {
+                this.displays.color.textContent = e.target.value.toUpperCase();
+                this.render();
+            }
         });
 
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
         this.resetBtn.addEventListener('click', () => this.reset());
+
+        // Menu state tracking
+        this.controlsPanel.addEventListener('toggle', (e) => {
+            this.menuOpen = e.newState === 'open';
+            this.canvas.classList.toggle('interaction-disabled', this.menuOpen);
+        });
+    }
+
+    initTooltips() {
+        this.tips = [
+            "Move your pointer slowly to adjust the primary pendulum",
+            "Click to adjust the secondary pendulum",
+            "Press SHIFT to interlock x and y axes of the same pendulums",
+            "Press M to open the menu",
+            "Press R to reset all parameters",
+            "Press D to download the harmonogram"
+        ];
+        this.currentTipIndex = 0;
+
+        setInterval(() => {
+            this.currentTipIndex = (this.currentTipIndex + 1) % this.tips.length;
+            this.tooltipText.style.opacity = 0;
+
+            setTimeout(() => {
+                this.tooltipText.textContent = this.tips[this.currentTipIndex];
+                this.tooltipText.style.opacity = 1;
+            }, 500); // Wait for fade out
+        }, 10000); // 15 seconds
+    }
+
+    startSmoothingLoop() {
+        const tick = () => {
+            if (this.inputs.smooth.checked) {
+                let needsRender = false;
+                const easing = 0.02;
+
+                for (let i = 0; i < 4; i++) {
+                    // Amplitudes
+                    const ampDiff = this.targetParams.amplitudes[i] - this.params.amplitudes[i];
+                    if (Math.abs(ampDiff) > 0.1) {
+                        this.params.amplitudes[i] += ampDiff * easing;
+                        needsRender = true;
+                    } else {
+                        this.params.amplitudes[i] = this.targetParams.amplitudes[i];
+                    }
+
+                    // Step Sizes
+                    const stepDiff = this.targetParams.stepSizes[i] - this.params.stepSizes[i];
+                    if (Math.abs(stepDiff) > 0.00001) {
+                        this.params.stepSizes[i] += stepDiff * easing;
+                        needsRender = true;
+                    } else {
+                        this.params.stepSizes[i] = this.targetParams.stepSizes[i];
+                    }
+
+                    // Phases
+                    const phaseDiff = this.targetParams.phases[i] - this.params.phases[i];
+                    if (Math.abs(phaseDiff) > 0.001) {
+                        this.params.phases[i] += phaseDiff * easing;
+                        needsRender = true;
+                    } else {
+                        this.params.phases[i] = this.targetParams.phases[i];
+                    }
+                }
+
+                if (needsRender) {
+                    this.render();
+                }
+            }
+            requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
     }
 
     handleParamChange(key, value) {
@@ -178,6 +283,7 @@ class Harmonograph {
     }
 
     handleInteraction(e, isClick = false) {
+        if (this.menuOpen) return;
         const rect = this.canvas.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
@@ -203,16 +309,19 @@ class Harmonograph {
         const vx = nx * 1000;
         const vy = ny * 1000;
 
+        const isSmooth = this.inputs.smooth.checked;
+        const p = isSmooth ? this.targetParams : this.params;
+
         if (isClick) {
             // Set Table Params (Pendulums 3 & 4)
-            this.params.amplitudes[2] = Math.sqrt(vx) * 15;
-            this.params.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(vy) * 15 : 0;
-            this.params.stepSizes[2] = Math.sqrt(vy) / (vx || 1);
-            this.params.stepSizes[3] = Math.sqrt(vx) / (vy || 1);
+            p.amplitudes[2] = Math.sqrt(vx) * 15;
+            p.amplitudes[3] = this.params.dimensions >= 3 ? Math.sqrt(vy) * 15 : 0;
+            p.stepSizes[2] = Math.sqrt(vy) / (vx || 1);
+            p.stepSizes[3] = Math.sqrt(vx) / (vy || 1);
         } else {
             // Set Pen Params (Pendulums 1 & 2)
-            this.params.amplitudes[0] = Math.sqrt(vx) * 15;
-            this.params.amplitudes[1] = Math.sqrt(vy) * 15;
+            p.amplitudes[0] = Math.sqrt(vx) * 15;
+            p.amplitudes[1] = Math.sqrt(vy) * 15;
 
             if (this.inputs.natural.checked) {
                 // Natural mode: frequencies stay very close (approx 1:1)
@@ -223,18 +332,20 @@ class Harmonograph {
                 // Allow a tiny difference (5%) for slow evolution
                 const diff = (rawFreq1 - rawFreq0) * 0.05;
 
-                this.params.stepSizes[0] = avgFreq - diff;
-                this.params.stepSizes[1] = avgFreq + diff;
+                p.stepSizes[0] = avgFreq - diff;
+                p.stepSizes[1] = avgFreq + diff;
 
                 // Ensure phase offset for elliptical movement
-                this.params.phases[1] = Math.PI / 2;
+                p.phases[1] = Math.PI / 2;
             } else {
-                this.params.stepSizes[0] = Math.sqrt(vy) / (vx || 1);
-                this.params.stepSizes[1] = Math.sqrt(vx) / (vy || 1);
+                p.stepSizes[0] = Math.sqrt(vy) / (vx || 1);
+                p.stepSizes[1] = Math.sqrt(vx) / (vy || 1);
             }
         }
 
-        this.render();
+        if (!isSmooth) {
+            this.render();
+        }
     }
 
     generatePoints() {
@@ -333,8 +444,20 @@ class Harmonograph {
 
     downloadImage() {
         const link = document.createElement('a');
-        link.download = `harmonograph-${Date.now()}.webp`;
-        link.href = this.canvas.toDataURL('image/webp');
+        const timestamp = Date.now();
+
+        // Check for JPEG XL support (falls back to WebP if unsupported)
+        const jxlData = this.canvas.toDataURL('image/jxl');
+        const isJxlSupported = jxlData.startsWith('data:image/jxl');
+
+        if (isJxlSupported) {
+            link.download = `harmonograph-${timestamp}.jxl`;
+            link.href = jxlData;
+        } else {
+            link.download = `harmonograph-${timestamp}.webp`;
+            link.href = this.canvas.toDataURL('image/webp');
+        }
+
         link.click();
     }
 
@@ -345,6 +468,7 @@ class Harmonograph {
         this.inputs.damping.value = this.initialValues.damping;
         this.inputs.thickness.value = this.initialValues.thickness;
         this.inputs.natural.checked = this.initialValues.natural;
+        this.inputs.smooth.checked = this.initialValues.smooth;
         this.inputs.customColor.checked = this.initialValues.customColor;
         this.inputs.lineColor.value = this.initialValues.lineColor;
 
@@ -357,8 +481,9 @@ class Harmonograph {
 
         // Update Displays
         Object.keys(this.displays).forEach(key => {
+            if (key === 'color') return; // Handled above
             const val = this.inputs[key].value;
-            this.displays[key].textContent = key === 'dimensions' || key === 'damping' ?
+            this.displays[key].textContent = (key === 'dimensions' || key === 'damping') ?
                 parseInt(val) : parseFloat(val).toFixed(2);
         });
 
