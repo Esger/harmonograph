@@ -374,8 +374,9 @@ class Harmonograph {
 
         // Update Displays
         Object.keys(this.displays).forEach(key => {
+            if (key === 'color') return; // Handled above
             const val = this.inputs[key].value;
-            this.displays[key].textContent = key === 'dimensions' || key === 'damping' ?
+            this.displays[key].textContent = (key === 'dimensions' || key === 'damping') ?
                 parseInt(val) : parseFloat(val).toFixed(2);
         });
 
