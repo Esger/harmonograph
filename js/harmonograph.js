@@ -83,7 +83,7 @@ class Harmonograph {
             damping: this.inputs.damping.value,
             thickness: this.inputs.thickness.value,
             natural: this.inputs.natural.checked,
-            smooth: this.inputs.smooth.checked,
+            smooth: this.inputs.smooth.value,
             customColor: this.inputs.customColor.checked,
             lineColor: this.inputs.lineColor.value
         };
@@ -93,6 +93,7 @@ class Harmonograph {
             rotation: id('rotationValue'),
             damping: id('dampingValue'),
             thickness: id('thicknessValue'),
+            smooth: id('smoothValue'),
             color: id('colorValue')
         };
 
@@ -110,6 +111,7 @@ class Harmonograph {
         this.inputs.rotation.addEventListener('input', (e) => this.handleParamChange('rotation', e.target.value));
         this.inputs.damping.addEventListener('input', (e) => this.handleParamChange('damping', e.target.value));
         this.inputs.thickness.addEventListener('input', (e) => this.handleParamChange('thickness', e.target.value));
+        this.inputs.smooth.addEventListener('input', (e) => this.handleParamChange('smooth', e.target.value));
 
         // Interaction
         this.canvas.addEventListener('mousemove', (e) => this.handleInteraction(e));
@@ -210,9 +212,13 @@ class Harmonograph {
 
     startSmoothingLoop() {
         const tick = () => {
-            if (this.inputs.smooth.checked) {
+            const smoothness = parseFloat(this.inputs.smooth.value);
+
+            if (smoothness > 0) {
                 let needsRender = false;
-                const easing = 0.02;
+                // Exponential mapping: 0 -> 1.0 (instant), 100 -> 0.0075 (very smooth)
+                // Default 80 -> 1/1.05^80 approx 0.02
+                const easing = 1.0 / Math.pow(1.05, smoothness);
 
                 for (let i = 0; i < 4; i++) {
                     // Amplitudes
@@ -254,7 +260,8 @@ class Harmonograph {
 
     handleParamChange(key, value) {
         const val = parseFloat(value);
-        this.displays[key].textContent = val.toFixed(key === 'dimensions' || key === 'damping' ? 0 : 2);
+        const precision = (key === 'dimensions' || key === 'damping' || key === 'smooth') ? 0 : 2;
+        this.displays[key].textContent = val.toFixed(precision);
 
         switch (key) {
             case 'dimensions':
@@ -268,6 +275,9 @@ class Harmonograph {
                 break;
             case 'thickness':
                 this.params.thickness = val;
+                break;
+            case 'smooth':
+                // Handled in smoothing loop
                 break;
         }
         this.render();
@@ -309,7 +319,7 @@ class Harmonograph {
         const vx = nx * 1000;
         const vy = ny * 1000;
 
-        const isSmooth = this.inputs.smooth.checked;
+        const isSmooth = parseFloat(this.inputs.smooth.value) > 0;
         const p = isSmooth ? this.targetParams : this.params;
 
         if (isClick) {
@@ -493,7 +503,7 @@ class Harmonograph {
         this.inputs.damping.value = this.initialValues.damping;
         this.inputs.thickness.value = this.initialValues.thickness;
         this.inputs.natural.checked = this.initialValues.natural;
-        this.inputs.smooth.checked = this.initialValues.smooth;
+        this.inputs.smooth.value = this.initialValues.smooth;
         this.inputs.customColor.checked = this.initialValues.customColor;
         this.inputs.lineColor.value = this.initialValues.lineColor;
 
@@ -508,7 +518,7 @@ class Harmonograph {
         Object.keys(this.displays).forEach(key => {
             if (key === 'color') return; // Handled above
             const val = this.inputs[key].value;
-            this.displays[key].textContent = (key === 'dimensions' || key === 'damping') ?
+            this.displays[key].textContent = (key === 'dimensions' || key === 'damping' || key === 'smooth') ?
                 parseInt(val) : parseFloat(val).toFixed(2);
         });
 
