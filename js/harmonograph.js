@@ -83,7 +83,7 @@ class Harmonograph {
             damping: this.inputs.damping.value,
             thickness: this.inputs.thickness.value,
             natural: this.inputs.natural.checked,
-            smooth: this.inputs.smooth.checked,
+            smooth: this.inputs.smooth.value,
             customColor: this.inputs.customColor.checked,
             lineColor: this.inputs.lineColor.value
         };
@@ -93,6 +93,7 @@ class Harmonograph {
             rotation: id('rotationValue'),
             damping: id('dampingValue'),
             thickness: id('thicknessValue'),
+            smooth: id('smoothValue'),
             color: id('colorValue')
         };
 
@@ -110,6 +111,7 @@ class Harmonograph {
         this.inputs.rotation.addEventListener('input', (e) => this.handleParamChange('rotation', e.target.value));
         this.inputs.damping.addEventListener('input', (e) => this.handleParamChange('damping', e.target.value));
         this.inputs.thickness.addEventListener('input', (e) => this.handleParamChange('thickness', e.target.value));
+        this.inputs.smooth.addEventListener('input', (e) => this.handleParamChange('smooth', e.target.value));
 
         // Interaction
         this.canvas.addEventListener('mousemove', (e) => this.handleInteraction(e));
@@ -210,9 +212,13 @@ class Harmonograph {
 
     startSmoothingLoop() {
         const tick = () => {
-            if (this.inputs.smooth.checked) {
+            const smoothness = parseFloat(this.inputs.smooth.value);
+
+            if (smoothness > 0) {
                 let needsRender = false;
-                const easing = 0.02;
+                // Exponential mapping: 0 -> 1.0 (instant), 100 -> 0.0075 (very smooth)
+                // Default 80 -> 1/1.05^80 approx 0.02
+                const easing = 1.0 / Math.pow(1.05, smoothness);
 
                 for (let i = 0; i < 4; i++) {
                     // Amplitudes
@@ -254,7 +260,8 @@ class Harmonograph {
 
     handleParamChange(key, value) {
         const val = parseFloat(value);
-        this.displays[key].textContent = val.toFixed(key === 'dimensions' || key === 'damping' ? 0 : 2);
+        const precision = (key === 'dimensions' || key === 'damping' || key === 'smooth') ? 0 : 2;
+        this.displays[key].textContent = val.toFixed(precision);
 
         switch (key) {
             case 'dimensions':
@@ -268,6 +275,9 @@ class Harmonograph {
                 break;
             case 'thickness':
                 this.params.thickness = val;
+                break;
+            case 'smooth':
+                // Handled in smoothing loop
                 break;
         }
         this.render();
@@ -309,7 +319,7 @@ class Harmonograph {
         const vx = nx * 1000;
         const vy = ny * 1000;
 
-        const isSmooth = this.inputs.smooth.checked;
+        const isSmooth = parseFloat(this.inputs.smooth.value) > 0;
         const p = isSmooth ? this.targetParams : this.params;
 
         if (isClick) {
@@ -350,15 +360,36 @@ class Harmonograph {
 
     generatePoints() {
         const { dimensions, amplitudes, stepSizes, phases, friction, rotationAmplitude, rotationStepSize } = this.params;
+
+        // Find the maximum angular change per step to determine required resolution
+        const maxStep = Math.max(...stepSizes, rotationStepSize);
+        const targetStep = 0.01; // Significantly lower for high-resolution curves
+
+        // Calculate sub-sampling factor
+        this.subSteps = 1;
+        if (maxStep > targetStep) {
+            this.subSteps = Math.min(10, Math.ceil(maxStep / targetStep));
+        }
+        const subSteps = this.subSteps;
+
         const currentAmps = [...amplitudes];
         const angles = [0, 0, 0, 0];
         let rotTimer = 0;
 
         this.points = [];
-        const limit = 2;
+        const limit = 8; // Stop sooner to avoid the dense "blob" in the center
         let count = 0;
 
-        while ((currentAmps[0] > limit || currentAmps[1] > limit || currentAmps[2] > limit || currentAmps[3] > limit) && count < 8000) {
+        // Scale simulation parameters for sub-sampling
+        const stepScaling = 1 / subSteps;
+        const scaledStepSizes = stepSizes.map(s => s * stepScaling);
+        const scaledFriction = friction.map(f => Math.pow(f, stepScaling));
+        const scaledRotationStep = rotationStepSize * stepScaling;
+
+        // Protect against performance degradation with a hard cap on points
+        const maxPoints = 120000;
+
+        while ((currentAmps[0] > limit || currentAmps[1] > limit || (dimensions >= 3 && currentAmps[2] > limit) || (dimensions >= 4 && currentAmps[3] > limit)) && count < maxPoints) {
             const dampingRatio = currentAmps[0] / (amplitudes[0] || 1);
 
             let rawX = 0;
@@ -377,10 +408,10 @@ class Harmonograph {
             this.points.push([rotatedX, rotatedY]);
 
             for (let i = 0; i < 4; i++) {
-                angles[i] += stepSizes[i];
-                currentAmps[i] *= friction[i];
+                angles[i] += scaledStepSizes[i];
+                currentAmps[i] *= scaledFriction[i];
             }
-            rotTimer += rotationStepSize;
+            rotTimer += scaledRotationStep;
             count++;
         }
     }
@@ -417,15 +448,19 @@ class Harmonograph {
             if (useCustom) {
                 this.ctx.strokeStyle = customColor;
             } else {
-                const blue = Math.sin(f * i + 0) * 127 + 128;
-                const red = Math.sin(f * i + 2) * 127 + 128;
-                const green = Math.sin(f * i + 4) * 127 + 128;
+                // Adjust frequency based on sub-sampling to keep color phase consistent
+                const adjustedF = f / (this.subSteps || 1);
+                const blue = Math.sin(adjustedF * i + 0) * 127 + 128;
+                const red = Math.sin(adjustedF * i + 2) * 127 + 128;
+                const green = Math.sin(adjustedF * i + 4) * 127 + 128;
                 this.ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
             }
 
             this.ctx.lineTo(this.points[i][0] * scale + centerX, this.points[i][1] * scale + centerY);
 
-            if (i % 20 === 0) {
+            // Chunk path segments to balance performance and color resolution
+            const chunkSize = Math.max(20, 20 * (this.subSteps || 1));
+            if (i % chunkSize === 0) {
                 this.ctx.stroke();
                 this.ctx.beginPath();
                 this.ctx.moveTo(this.points[i][0] * scale + centerX, this.points[i][1] * scale + centerY);
@@ -468,7 +503,7 @@ class Harmonograph {
         this.inputs.damping.value = this.initialValues.damping;
         this.inputs.thickness.value = this.initialValues.thickness;
         this.inputs.natural.checked = this.initialValues.natural;
-        this.inputs.smooth.checked = this.initialValues.smooth;
+        this.inputs.smooth.value = this.initialValues.smooth;
         this.inputs.customColor.checked = this.initialValues.customColor;
         this.inputs.lineColor.value = this.initialValues.lineColor;
 
@@ -483,7 +518,7 @@ class Harmonograph {
         Object.keys(this.displays).forEach(key => {
             if (key === 'color') return; // Handled above
             const val = this.inputs[key].value;
-            this.displays[key].textContent = (key === 'dimensions' || key === 'damping') ?
+            this.displays[key].textContent = (key === 'dimensions' || key === 'damping' || key === 'smooth') ?
                 parseInt(val) : parseFloat(val).toFixed(2);
         });
 
