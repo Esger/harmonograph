@@ -70,15 +70,6 @@
                 </header>
                 <section class="control-group">
                     <div class="control-header">
-                        <h3>Interaction</h3>
-                        <div class="header-options">
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" id="smoothMode" checked>
-                                <span class="checkbox-label">Smooth</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="control-header">
                         <h3>Pendulums</h3>
                         <div class="header-options">
                             <label class="checkbox-wrapper">
@@ -90,6 +81,14 @@
                     <div class="input-wrapper">
                         <input type="range" id="dimensions" min="1" max="4" value="4" step="1">
                         <span class="value-display" id="dimensionsValue">4</span>
+                    </div>
+                </section>
+
+                <section class="control-group">
+                    <h3>Interaction smoothing</h3>
+                    <div class="input-wrapper">
+                        <input type="range" id="smoothMode" min="0" max="100" value="80" step="1">
+                        <span class="value-display" id="smoothValue">80</span>
                     </div>
                 </section>
 
