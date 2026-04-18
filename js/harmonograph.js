@@ -54,6 +54,12 @@ class Harmonograph {
 
         // Target params for smoothing
         this.targetParams = JSON.parse(JSON.stringify(this.params));
+
+        // Audio State
+        this.audioCtx = null;
+        this.masterGain = null;
+        this.oscillators = [];
+        this.audioInitialized = false;
     }
 
     initDOM() {
@@ -69,6 +75,7 @@ class Harmonograph {
             damping: id('damping'),
             thickness: id('thickness'),
             natural: id('naturalMode'),
+            audio: id('audioMode'),
             smooth: id('smoothMode'),
             customColor: id('customColor'),
             lineColor: id('lineColor')
@@ -83,6 +90,7 @@ class Harmonograph {
             damping: this.inputs.damping.value,
             thickness: this.inputs.thickness.value,
             natural: this.inputs.natural.checked,
+            audio: this.inputs.audio.checked,
             smooth: this.inputs.smooth.value,
             customColor: this.inputs.customColor.checked,
             lineColor: this.inputs.lineColor.value
@@ -151,6 +159,14 @@ class Harmonograph {
 
         // UI Controls
         this.inputs.natural.addEventListener('change', () => this.render());
+
+        this.inputs.audio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                this.initAudio();
+            } else {
+                this.stopAudio();
+            }
+        });
 
         this.inputs.customColor.addEventListener('change', (e) => {
             const enabled = e.target.checked;
@@ -253,6 +269,12 @@ class Harmonograph {
                     this.render();
                 }
             }
+            if (this.inputs.audio.checked && smoothness > 0) {
+                // If smoothing is active, we need to update audio every tick
+                // as this.params is changing towards this.targetParams
+                this.updateAudioFrequencies();
+            }
+
             requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
@@ -419,6 +441,10 @@ class Harmonograph {
     render() {
         this.generatePoints();
 
+        if (this.inputs.audio.checked) {
+            this.updateAudioFrequencies();
+        }
+
         const dpr = window.devicePixelRatio || 1;
         const width = this.canvas.width / dpr;
         const height = this.canvas.height / dpr;
@@ -503,6 +529,7 @@ class Harmonograph {
         this.inputs.damping.value = this.initialValues.damping;
         this.inputs.thickness.value = this.initialValues.thickness;
         this.inputs.natural.checked = this.initialValues.natural;
+        this.inputs.audio.checked = this.initialValues.audio;
         this.inputs.smooth.value = this.initialValues.smooth;
         this.inputs.customColor.checked = this.initialValues.customColor;
         this.inputs.lineColor.value = this.initialValues.lineColor;
@@ -523,10 +550,83 @@ class Harmonograph {
         });
 
         this.render();
+
+        if (!this.inputs.audio.checked) {
+            this.stopAudio();
+        }
     }
 
     updateCurrentYear() {
         id('currentYear').textContent = new Date().getFullYear();
+    }
+
+    // Audio Methods
+    initAudio() {
+        if (!this.audioInitialized) {
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            this.masterGain = this.audioCtx.createGain();
+            this.masterGain.connect(this.audioCtx.destination);
+            this.masterGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+            for (let i = 0; i < 4; i++) {
+                const osc = this.audioCtx.createOscillator();
+                const nodeGain = this.audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.connect(nodeGain);
+                nodeGain.connect(this.masterGain);
+
+                nodeGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                osc.start();
+
+                this.oscillators.push({
+                    osc,
+                    gain: nodeGain
+                });
+            }
+            this.audioInitialized = true;
+        }
+
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
+        // Fade in master gain
+        this.masterGain.gain.linearRampToValueAtTime(0.2, this.audioCtx.currentTime + 0.1);
+        this.updateAudioFrequencies();
+    }
+
+    stopAudio() {
+        if (this.masterGain) {
+            this.masterGain.gain.linearRampToValueAtTime(0, this.audioCtx.currentTime + 0.1);
+        }
+    }
+
+    updateAudioFrequencies() {
+        if (!this.audioInitialized || !this.inputs.audio.checked) return;
+
+        const { dimensions, stepSizes, amplitudes } = this.params;
+        const multiplier = 1000; // Map stepSize to audible frequency
+
+        for (let i = 0; i < 4; i++) {
+            const oscData = this.oscillators[i];
+            const isActive = i < dimensions;
+
+            if (isActive) {
+                // Map stepSize to frequency, capping at 8000Hz to avoid ultrasonic/harsh tones
+                const freq = Math.min(8000, Math.max(20, stepSizes[i] * multiplier));
+                // Smooth transition for frequency
+                oscData.osc.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.05);
+
+                // Adjust volume based on amplitude - if it's too small, don't play it
+                let targetVolume = 0.2; // Base volume per oscillator
+                if (amplitudes[i] < 5) targetVolume = 0;
+
+                oscData.gain.gain.setTargetAtTime(targetVolume, this.audioCtx.currentTime, 0.05);
+            } else {
+                oscData.gain.gain.setTargetAtTime(0, this.audioCtx.currentTime, 0.05);
+            }
+        }
     }
 }
 
